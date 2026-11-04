@@ -22,6 +22,7 @@ TENANT_POLICIES_WRITE = "tenant.policies.write"
 TENANT_AGENTS_WRITE = "tenant.agents.write"
 TENANT_TOOLS_WRITE = "tenant.tools.write"
 TENANT_HITL_CONFIGURE = "tenant.hitl.configure"
+TENANT_HITL_VOTE = "tenant.hitl.vote"
 TENANT_SINKS_WRITE = "tenant.sinks.write"
 TENANT_AUDIT_READ = "tenant.audit.read"
 TENANT_RUNTIME_EVALUATE = "tenant.runtime.evaluate"
@@ -33,6 +34,7 @@ TENANT_PERMISSIONS = (
     TENANT_AGENTS_WRITE,
     TENANT_TOOLS_WRITE,
     TENANT_HITL_CONFIGURE,
+    TENANT_HITL_VOTE,
     TENANT_SINKS_WRITE,
     TENANT_AUDIT_READ,
     TENANT_RUNTIME_EVALUATE,

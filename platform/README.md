@@ -48,6 +48,14 @@ poetry run pytest -v --tb=short --asyncio-mode=auto
 
 Platform tests are not collected unless `PLATFORM_TEST_DATABASE_URL` is set, so that command still reports 22 tests.
 
+## Evaluate
+
+`POST /tenant/v1/agents/{agent_id}/evaluate` runs the platform facade. It constructs `ExecutiveAgent` and calls the library privacy guard, semantic guard, circuit breaker, pricing engine, and `HITLManager`. It does not call `ExecutiveAgent.execute`, and it does not register tools on the global registry.
+
+`PLATFORM_LLM_PROVIDER` defaults to `scripted`. Set it to `ollama` to use `OllamaClient` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`). Constructing an agent loads Presidio, which expects the `en_core_web_lg` spaCy model, and SentenceTransformers from the `govagent[enterprise]` extra.
+
+Votes are `POST /tenant/v1/approvals/{id}/votes` with `{"decision": "APPROVED"}` or `REJECTED`. The caller's HITL role is assigned with `PUT /tenant/v1/hitl-assignments/{identity_id}` and must be one of the roles in `HITLManager.voter_weights`.
+
 ## Notes versus the Phase 1 plan
 
 - Alembic connects as the database superuser in `PLATFORM_DATABASE_URL`. `govagent_owner` and `govagent_app` are created by the first migration, so they cannot be the migrator. The API and the tests connect as `govagent_app` (`NOBYPASSRLS`, not a superuser, not the table owner). The sample URL that used `govagent_owner` would still pass forced RLS, and it would also be able to update `audit_events` because the owner has every privilege.
