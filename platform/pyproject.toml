@@ -12,7 +12,7 @@ packages = [{ include = "govagent_platform" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
-govagent = { path = "..", develop = true }
+govagent = { path = "..", develop = true, extras = ["enterprise"] }
 fastapi = ">=0.100.0"
 uvicorn = ">=0.22.0"
 sqlalchemy = ">=2.0.0"

@@ -403,6 +403,29 @@ class AuditEvent(Base):
     )
 
 
+class TenantHitlAssignment(Base):
+    __tablename__ = "tenant_hitl_assignments"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "identity_id"],
+            ["tenant_memberships.tenant_id", "tenant_memberships.identity_id"],
+            ondelete="RESTRICT",
+            name="fk_hitl_assignments_membership",
+        ),
+        CheckConstraint(
+            "hitl_role IN ('C-Suite', 'Director', 'Auditor', 'Lead', 'Clerk')",
+            name="ck_hitl_assignments_role",
+        ),
+    )
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    identity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    hitl_role: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class SecretRef(Base):
     __tablename__ = "secret_refs"
 
