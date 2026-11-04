@@ -1,5 +1,11 @@
 # govagent-platform changelog
 
+## 0.4.0
+
+- SCIM users on the existing identity and membership tables. Group writes are not implemented.
+- Operator promotion of one tenant into a dedicated schema. Dedicated databases are refused.
+- Retention purge archives old execution snapshots and does not delete audit or ledger rows.
+
 Platform versions are independent of the `govagent` library on PyPI. This package is not published to PyPI.
 
 ## 0.3.0

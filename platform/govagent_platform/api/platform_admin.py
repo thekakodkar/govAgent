@@ -29,7 +29,9 @@ from govagent_platform.services.policies import (
     draft_global_policy,
 )
 from govagent_platform.services.errors import ServiceError
+from govagent_platform.services.isolation import IsolationRejected, promote
 from govagent_platform.services.oidc import finish_oidc, start_oidc
+from govagent_platform.services.retention import purge_expired
 from govagent_platform.services.tenants import (
     TenantServiceError,
     assign_plan,
@@ -73,6 +75,10 @@ class PlanCreateBody(BaseModel):
 
 class PlanAssignBody(BaseModel):
     plan_id: UUID
+
+
+class IsolationBody(BaseModel):
+    isolation_tier: str
 
 
 class GlobalPolicyBody(BaseModel):
@@ -255,6 +261,36 @@ def get_one_tenant(
     except TenantServiceError as exc:
         raise _service_error(exc) from exc
     return metadata(session, tenant)
+
+
+@router.post("/tenants/{tenant_id}/isolation")
+def post_isolation(
+    tenant_id: UUID,
+    body: IsolationBody,
+    actor: Actor = Depends(require(PLATFORM_TENANTS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        tenant = promote(session, actor, tenant_id, body.isolation_tier)
+    except IsolationRejected as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"code": exc.code, "detail": exc.detail},
+        ) from exc
+    except (TenantServiceError, ServiceError) as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    return metadata(session, tenant)
+
+
+@router.post("/retention/purge")
+def post_purge(
+    actor: Actor = Depends(require(PLATFORM_TENANTS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return purge_expired(session, actor)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
 
 @router.post("/plans", status_code=201)

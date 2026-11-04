@@ -52,6 +52,7 @@ def metadata(session: Session, tenant: Tenant) -> dict[str, Any]:
         else {"id": str(plan.id), "code": plan.code, "name": plan.name},
         "region": tenant.region,
         "isolation_tier": tenant.isolation_tier,
+        "schema_name": tenant.schema_name,
     }
 
 

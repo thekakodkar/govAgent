@@ -80,7 +80,7 @@ def load_actor(session: Session, identity_id: UUID, scope: str, tenant_id: UUID 
             )
         ).all()
     )
-    begin_tenant(session, tenant_id)
+    begin_tenant(session, tenant_id, tenant.schema_name)
     return Actor(
         identity_id=identity_id,
         scope="tenant",

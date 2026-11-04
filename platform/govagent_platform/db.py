@@ -56,12 +56,22 @@ def begin_platform(session: Session, *, break_glass: bool = False) -> None:
     _set(session, "app.platform_break_glass", "on" if break_glass else "off")
 
 
-def begin_tenant(session: Session, tenant_id: UUID) -> None:
-    """Tenant scope. ``app.tenant_id`` is the only tenant the statement can see."""
+def begin_tenant(session: Session, tenant_id: UUID, schema_name: str | None = None) -> None:
+    """Tenant scope. ``app.tenant_id`` is the only tenant the statement can see.
+
+    A dedicated schema is searched before ``public``. Ledger and audit stay in
+    ``public`` and remain visible through that second entry.
+    """
 
     _set(session, "app.actor_scope", "tenant")
     _set(session, "app.tenant_id", str(tenant_id))
     _set(session, "app.platform_break_glass", "off")
+    if schema_name:
+        if not schema_name.startswith("tenant_") or not schema_name.removeprefix("tenant_").isalnum():
+            raise ValueError("schema name is not a promotion schema")
+        _set(session, "search_path", f"{schema_name}, public")
+    else:
+        _set(session, "search_path", "public")
 
 
 def begin_authenticate(session: Session) -> None:

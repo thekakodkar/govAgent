@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "govagent-platform"
-version = "0.3.0"
+version = "0.4.0"
 description = "Enterprise control plane for tenants, identity, and audit. Not the govagent library published on PyPI."
 authors = ["Niraj Kakodkar <niraj.kakodkar@gmail.com>"]
 readme = "README.md"

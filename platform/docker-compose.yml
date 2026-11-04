@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: govagent-platform:0.3.0
+    image: govagent-platform:0.4.0
     ports:
       - "8070:8070"
     environment:

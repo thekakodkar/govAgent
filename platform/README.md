@@ -52,7 +52,7 @@ Platform tests are not collected unless `PLATFORM_TEST_DATABASE_URL` is set, so 
 
 `POST /tenant/v1/agents/{agent_id}/evaluate` runs `TenantExecutiveAgent`, a subclass of `ExecutiveAgent`. The loop matches govagent 3.0.3 `execute`. Schema checks call `GlobalRegistry.validate_intent_schema` with a private object that holds only that request's tool map. The process-global registry is not modified.
 
-This package is version 0.3.0. It is not published to PyPI. Customers get a container image tagged `govagent-platform:0.3.0` (and `govagent-platform:0.3`) or an install from a private index. The image installs `govagent[enterprise]==3.0.3` from PyPI, which satisfies `govagent>=3.0.3,<3.1.0`. Do not add a job that uploads this package to `upload.pypi.org`.
+This package is version 0.4.0. It is not published to PyPI. Customers get a container image tagged `govagent-platform:0.4.0` or an install from a private index. The image installs `govagent[enterprise]==3.0.3` from PyPI, which satisfies `govagent>=3.0.3,<3.1.0`. Do not add a job that uploads this package to `upload.pypi.org`.
 
 `PLATFORM_LLM_PROVIDER` defaults to `scripted`. Set it to `ollama` to use `OllamaClient` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`). Constructing an agent loads Presidio, which expects the `en_core_web_lg` spaCy model, and SentenceTransformers from the `govagent[enterprise]` extra.
 
