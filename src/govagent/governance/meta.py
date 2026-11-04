@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("govagent.governance.meta")
@@ -13,7 +13,9 @@ class PolicyAmendmentProposal(BaseModel):
     """
     type: str = "POLICY_AMENDMENT_PROPOSAL"
     version: str = "1.0.0"
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    )
     reason: str
     target_policy: str
     metric_breached: str

@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseExporter
 
 logger = logging.getLogger("govagent.telemetry.exporters.federated")
@@ -15,7 +15,9 @@ class FederatedAuditPayload(BaseModel):
     organization_id: str
     agent_id: str
     task_input: str
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    )
     status: str
     payload_digest: Dict[str, Any]
 

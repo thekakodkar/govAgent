@@ -1,6 +1,6 @@
 import pytest
 from govagent.telemetry.manager import TelemetryManager
-from govagent.telemetry.exporters.federated import FederatedTelemetryExporter
+from govagent.telemetry.exporters.federated import FederatedAuditPayload, FederatedTelemetryExporter
 
 @pytest.mark.asyncio
 async def test_federated_cross_org_telemetry_loop(tmp_path):
@@ -12,6 +12,17 @@ async def test_federated_cross_org_telemetry_loop(tmp_path):
     audit_buffer = tmp_path / "test_audit_buffer.jsonl"
     tm = TelemetryManager(buffer_path=str(audit_buffer))
     
+    stamp = FederatedAuditPayload(
+        trace_id="t",
+        organization_id="ORG",
+        agent_id="a",
+        task_input="task",
+        status="success",
+        payload_digest={},
+    ).timestamp
+    assert stamp.endswith("Z")
+    assert "+00:00" not in stamp
+
     federated_sink = FederatedTelemetryExporter()
     
     # Register isolated cross-org client endpoints
