@@ -28,6 +28,8 @@ from govagent_platform.services.policies import (
     activate_global_policy,
     draft_global_policy,
 )
+from govagent_platform.services.errors import ServiceError
+from govagent_platform.services.oidc import finish_oidc, start_oidc
 from govagent_platform.services.tenants import (
     TenantServiceError,
     assign_plan,
@@ -47,11 +49,17 @@ class LoginBody(BaseModel):
     password: str
 
 
+class OidcCallbackBody(BaseModel):
+    state: str
+    subject: str
+
+
 class TenantCreateBody(BaseModel):
     slug: str
     display_name: str
     region: str | None = None
     plan_id: UUID | None = None
+    isolation_tier: str | None = None
 
 
 class PlanCreateBody(BaseModel):
@@ -142,6 +150,45 @@ def login(body: LoginBody, response: Response, session: Session = Depends(get_db
     return {"scope": scope, "tenant_id": tenant_id}
 
 
+@router.get("/session/oidc/start")
+def oidc_start(issuer: str, session: Session = Depends(get_db)):
+    begin_authenticate(session)
+    try:
+        return start_oidc(session, issuer)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.post("/session/oidc/callback")
+def oidc_callback(body: OidcCallbackBody, response: Response, session: Session = Depends(get_db)):
+    try:
+        settings = get_settings()
+    except SettingsError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    begin_authenticate(session)
+    try:
+        logged_in = finish_oidc(session, state=body.state, subject=body.subject)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    token = sign_session(
+        {
+            "identity_id": logged_in["identity_id"],
+            "scope": logged_in["scope"],
+            "tenant_id": logged_in["tenant_id"],
+        },
+        settings.session_secret,
+    )
+    response.set_cookie(
+        COOKIE_NAME,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=settings.environment == "production",
+        path="/",
+    )
+    return {"scope": logged_in["scope"], "tenant_id": logged_in["tenant_id"]}
+
+
 @router.delete("/session", status_code=204)
 def logout(response: Response):
     response.delete_cookie(COOKIE_NAME, path="/")
@@ -154,6 +201,14 @@ def post_tenant(
     actor: Actor = Depends(require(PLATFORM_TENANTS_WRITE)),
     session: Session = Depends(get_db),
 ):
+    if body.isolation_tier not in (None, "", "shared"):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "isolation_tier_not_available",
+                "detail": "Only the shared isolation tier can be created",
+            },
+        )
     try:
         tenant = create_tenant(
             session,

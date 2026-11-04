@@ -14,6 +14,7 @@ from govagent_platform.authz.permissions import (
     TENANT_HITL_CONFIGURE,
     TENANT_HITL_VOTE,
     TENANT_RUNTIME_EVALUATE,
+    TENANT_SINKS_WRITE,
     TENANT_TOOLS_WRITE,
 )
 from govagent_platform.security.context import Actor
@@ -21,8 +22,11 @@ from govagent_platform.security.dependencies import get_db, require
 from govagent_platform.services.agents import agent_payload, create_agent, list_agents
 from govagent_platform.services.approvals import approval_payload, assign_hitl_role, cast_vote
 from govagent_platform.services.errors import ServiceError
+from govagent_platform.services.evidence_export import compliance_dossier, financial_overview
 from govagent_platform.services.runtime import evaluate_agent, execution_payload
+from govagent_platform.services.sinks import create_sink, list_sinks, sink_payload
 from govagent_platform.services.tools import create_tool, list_tools, tool_payload
+from govagent_platform.telemetry import annotate, platform_span
 
 router = APIRouter(prefix="/tenant/v1", tags=["tenant-runtime"])
 
@@ -53,6 +57,11 @@ class VoteBody(BaseModel):
 
 class HitlAssignmentBody(BaseModel):
     hitl_role: str
+
+
+class SinkBody(BaseModel):
+    sink_type: str
+    locator: str
 
 
 def _http(exc: ServiceError) -> HTTPException:
@@ -127,7 +136,15 @@ async def post_evaluate(
     session: Session = Depends(get_db),
 ):
     try:
-        return await evaluate_agent(session, actor, agent_id, body.task)
+        with platform_span("tenant.evaluate") as span:
+            result = await evaluate_agent(session, actor, agent_id, body.task)
+            annotate(
+                span,
+                tenant_id=str(actor.tenant_id) if actor.tenant_id else None,
+                trace_id=result.get("trace_id"),
+                status=result.get("status"),
+            )
+            return result
     except ServiceError as exc:
         raise _http(exc) from exc
 
@@ -152,7 +169,14 @@ async def post_vote(
     session: Session = Depends(get_db),
 ):
     try:
-        request = await cast_vote(session, actor, request_id, body.decision)
+        with platform_span("tenant.vote") as span:
+            request = await cast_vote(session, actor, request_id, body.decision)
+            annotate(
+                span,
+                tenant_id=str(actor.tenant_id) if actor.tenant_id else None,
+                trace_id=request.trace_id,
+                status=request.status,
+            )
     except ServiceError as exc:
         raise _http(exc) from exc
     return approval_payload(session, actor, request.id)
@@ -170,6 +194,53 @@ def put_assignment(
     except ServiceError as exc:
         raise _http(exc) from exc
     return {"identity_id": str(row.identity_id), "hitl_role": row.hitl_role}
+
+
+@router.get("/compliance/export")
+def get_compliance_export(
+    actor: Actor = Depends(require(TENANT_AUDIT_READ)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return compliance_dossier(session, actor)
+    except ServiceError as exc:
+        raise _http(exc) from exc
+
+
+@router.get("/financials/risk-overview")
+def get_financials(
+    actor: Actor = Depends(require(TENANT_AUDIT_READ)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return financial_overview(session, actor)
+    except ServiceError as exc:
+        raise _http(exc) from exc
+
+
+@router.post("/sinks", status_code=201)
+def post_sink(
+    body: SinkBody,
+    actor: Actor = Depends(require(TENANT_SINKS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        row = create_sink(session, actor, sink_type=body.sink_type, locator=body.locator)
+    except ServiceError as exc:
+        raise _http(exc) from exc
+    return sink_payload(row)
+
+
+@router.get("/sinks")
+def get_sinks(
+    actor: Actor = Depends(require(TENANT_SINKS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        rows = list_sinks(session, actor)
+    except ServiceError as exc:
+        raise _http(exc) from exc
+    return [sink_payload(row) for row in rows]
 
 
 @router.get("/executions/{trace_id}")

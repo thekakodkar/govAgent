@@ -426,6 +426,21 @@ class TenantHitlAssignment(Base):
     )
 
 
+class OidcProvider(Base):
+    __tablename__ = "oidc_providers"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True
+    )
+    issuer: Mapped[str] = mapped_column(Text, nullable=False)
+    client_id: Mapped[str] = mapped_column(Text, nullable=False)
+    client_secret_locator: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class SecretRef(Base):
     __tablename__ = "secret_refs"
 

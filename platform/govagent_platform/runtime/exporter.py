@@ -51,4 +51,7 @@ class TenantDatabaseExporter(BaseExporter):
                 )
             )
         self.session.flush()
+        from govagent_platform.services.sinks import fanout_sinks
+
+        await fanout_sinks(self.session, snapshot_data)
         return True

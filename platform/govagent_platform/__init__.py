@@ -3,4 +3,4 @@
 Importing this module does not import the govagent library.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"

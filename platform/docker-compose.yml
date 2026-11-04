@@ -18,3 +18,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+
+  platform-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: govagent-platform:0.3.0
+    ports:
+      - "8070:8070"
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/govagent_platform
+      PLATFORM_APP_DATABASE_URL: postgresql+psycopg://govagent_app:govagent_app_local@postgres:5432/govagent_platform
+      PLATFORM_SESSION_SECRET: local-dev-only-change-me
+      PLATFORM_ENVIRONMENT: local
+      PLATFORM_LLM_PROVIDER: scripted
+    depends_on:
+      postgres:
+        condition: service_healthy

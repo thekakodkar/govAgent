@@ -18,6 +18,7 @@ from govagent_platform.runtime.tool_map import load_tool_map
 from govagent_platform.security.context import Actor
 from govagent_platform.services.audit import write_audit
 from govagent_platform.services.errors import ServiceError
+from govagent_platform.services.quotas import month_spend_usd, plan_for_tenant
 
 
 async def evaluate_agent(session: Session, actor: Actor, agent_id: UUID, task: str) -> dict:
@@ -52,6 +53,30 @@ async def evaluate_agent(session: Session, actor: Actor, agent_id: UUID, task: s
             "approval_request_id": None,
         }
 
+    plan = plan_for_tenant(session, actor.tenant_id)
+    spent = month_spend_usd(session)
+    ceiling = float(plan.monthly_tco_ceiling_usd)
+    if spent >= ceiling:
+        reason = (
+            "MONTHLY TCO REJECT: Projected month spend "
+            f"${spent:.2f} exceeds the plan ceiling of ${ceiling:.2f}."
+        )
+        write_audit(
+            session,
+            actor=actor,
+            action="runtime.evaluate",
+            target_type="agent",
+            target_id=str(agent_row.id),
+            after={"status": "blocked", "reason": reason},
+            tenant_id=actor.tenant_id,
+        )
+        return {
+            "trace_id": None,
+            "status": "blocked",
+            "output": reason,
+            "approval_request_id": None,
+        }
+
     tools = load_tool_map(list(session.scalars(select(ToolManifestRow)).all()))
     all_time, today = opening_balances(session)
     exporter = TenantDatabaseExporter(session, actor.tenant_id, agent_row.id)
@@ -79,6 +104,8 @@ async def evaluate_agent(session: Session, actor: Actor, agent_id: UUID, task: s
         all_time=all_time,
         today=today,
         on_pending=on_pending,
+        month_spend=spent,
+        monthly_ceiling=ceiling,
     )
     result = await runner.execute(task)
     write_audit(

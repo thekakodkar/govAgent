@@ -12,6 +12,7 @@ from govagent_platform.domain.models import Agent, TenantPolicy
 from govagent_platform.security.context import Actor
 from govagent_platform.services.audit import write_audit
 from govagent_platform.services.errors import ServiceError
+from govagent_platform.services.quotas import assert_agent_capacity
 
 
 def create_agent(session: Session, actor: Actor, *, name: str, persona: str, policy_id: UUID) -> Agent:
@@ -20,6 +21,7 @@ def create_agent(session: Session, actor: Actor, *, name: str, persona: str, pol
     policy = session.get(TenantPolicy, policy_id)
     if policy is None or policy.tenant_id != actor.tenant_id or policy.status != "active":
         raise ServiceError(404, "Active tenant policy not found")
+    assert_agent_capacity(session, actor.tenant_id)
     row = Agent(
         tenant_id=actor.tenant_id,
         name=name.strip(),

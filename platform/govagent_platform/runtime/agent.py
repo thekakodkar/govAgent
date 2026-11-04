@@ -1,23 +1,28 @@
-"""Tenant evaluate path. The loop is ExecutiveAgent.execute from govagent 3.0.3."""
+"""Tenant evaluate path.
+
+The loop matches govagent 3.0.3 ``ExecutiveAgent.execute``. Schema checks go
+through ``validate_tenant_intent``, which calls the library method with the
+per-request tool map. The process-global registry is not modified.
+"""
 
 from __future__ import annotations
 
-import threading
 from collections.abc import Callable
 from typing import Any
 
+from pydantic import ValidationError
+
 from govagent.agent import ExecutiveAgent
+from govagent.context import reset_current_agent, set_current_agent
 from govagent.guards import GovernanceViolation
 from govagent.hitl.manager import HITLManager
+from govagent.llm.base import LLMRequest
 from govagent.pricing import PricingEngine
-from govagent.registry import registry as public_registry
-from govagent.registry.schemas import FinancialTransactionIntent, ToolManifest
 
 from govagent_platform.runtime.hitl_adapter import ReplayVoteAdapter
 from govagent_platform.runtime.ledger import assert_spend_allowed
 from govagent_platform.runtime.tool_map import authorize
-
-_REGISTRY_LOCK = threading.Lock()
+from govagent_platform.runtime.validation import validate_tenant_intent
 
 
 class RunResult:
@@ -40,6 +45,8 @@ class TenantExecutiveAgent(ExecutiveAgent):
         all_time: float,
         today: float,
         on_pending: Callable[..., str],
+        month_spend: float = 0.0,
+        monthly_ceiling: float | None = None,
         telemetry=None,
         hitl_manager: HITLManager | None = None,
     ):
@@ -50,10 +57,10 @@ class TenantExecutiveAgent(ExecutiveAgent):
         self.all_time = all_time
         self.today = today
         self.on_pending = on_pending
+        self.month_spend = month_spend
+        self.monthly_ceiling = monthly_ceiling
         self.pricing = PricingEngine()
         self.pending_id: str | None = None
-        self._bound_names: list[str] = []
-        self._saved_entries: dict[str, Any] = {}
         self.telemetry.add_exporter(exporter)
 
     async def perform_action(self, action: str, params: dict) -> str:
@@ -79,6 +86,12 @@ class TenantExecutiveAgent(ExecutiveAgent):
             self.exporter.model_name = model
             self.exporter.tokens = tokens
             assert_spend_allowed(self.guard, step_cost, self.all_time, self.today)
+            projected_month = self.month_spend + step_cost
+            if self.monthly_ceiling is not None and projected_month > self.monthly_ceiling:
+                raise GovernanceViolation(
+                    "MONTHLY TCO REJECT: Projected month spend "
+                    f"${projected_month:.2f} exceeds the plan ceiling of ${self.monthly_ceiling:.2f}."
+                )
         if decision.high_risk:
             amount = _amount(params)
             required_score, risk_tier = await _probe_tier(self.persona, amount)
@@ -110,72 +123,138 @@ class TenantExecutiveAgent(ExecutiveAgent):
         return await super()._finalize(status, output, tokens, impact, model_node)
 
     async def execute(self, task: str) -> RunResult:
-        """Run govagent 3.0.3 execute(). Schema failures stay blocked inside that method."""
+        """3.0.3 loop. The schema call receives this request's tool map."""
 
-        self._bind_registry()
+        token = set_current_agent(self)
+        sanitized_task = self.guard.privacy.redact_task(task)
+        self.telemetry.start_trace(self.persona, sanitized_task)
+        current_step, total_tokens = 0, 0
+        last_active_model = "None Assigned"
         try:
-            snapshot = await super().execute(task)
-        except PermissionError as exc:
-            return self._denied(str(exc))
-        finally:
-            self._unbind_registry()
-        return RunResult(
-            trace_id=snapshot.trace_id,
-            status=snapshot.status,
-            output="" if snapshot.output is None else str(snapshot.output),
-            approval_request_id=self.pending_id,
-        )
+            while current_step < 10:
+                request_payload = LLMRequest(
+                    prompt=sanitized_task,
+                    system_instruction=f"You are a {self.persona}. Corporate Policy Boundaries apply.",
+                    temperature=0.0,
+                )
+                context_metadata = {
+                    "routing_mode": getattr(self.policy, "routing_mode", "LOCAL_ONLY"),
+                    "default_provider": getattr(self.policy, "default_provider", "local_ollama"),
+                    "agent_risk_profile": self.policy.metadata.get("risk_profile", "standard"),
+                    "contains_pii": getattr(self.guard.privacy, "last_execution_had_pii", False),
+                    "current_step": current_step,
+                }
+                if self.router is None:
+                    snapshot = await self._finalize(
+                        "success",
+                        "Task complete (Test Sandbox Mode).",
+                        total_tokens,
+                        model_node="mock_sandbox",
+                    )
+                    return _result(snapshot, self.pending_id)
 
-    def _denied(self, reason: str) -> RunResult:
-        return RunResult("", "denied", reason, None)
+                response = await self.router.route_and_generate(request_payload, context_metadata)
+                if hasattr(response, "selected_model"):
+                    last_active_model = response.selected_model
+                elif "local_ollama" in context_metadata["default_provider"]:
+                    last_active_model = "local_ollama"
 
-    def _bind_registry(self) -> None:
-        _REGISTRY_LOCK.acquire()
-        self._saved_entries = {}
-        self._bound_names = []
-        for name, row in self.tool_map.items():
-            if name in public_registry.tools:
-                self._saved_entries[name] = public_registry.tools[name]
-            public_registry.tools[name] = _registry_entry(row)
-            self._bound_names.append(name)
+                tokens_used = response.raw_usage.get("total_tokens", 0)
+                cost_incurred = response.raw_usage.get("estimated_cost_usd", 0.0)
+                total_tokens += tokens_used
 
-    def _unbind_registry(self) -> None:
-        try:
-            for name in self._bound_names:
-                if name in self._saved_entries:
-                    public_registry.tools[name] = self._saved_entries[name]
+                if response.tool_calls:
+                    tool_call = response.tool_calls[0]
+                    intent = {
+                        "thought": response.text[:250] + "...",
+                        "action": tool_call.get("name"),
+                        "params": tool_call.get("args", {}),
+                        "full_audit_log": response.text,
+                    }
                 else:
-                    public_registry.tools.pop(name, None)
-            self._bound_names = []
-            self._saved_entries = {}
+                    intent = {
+                        "thought": response.text[:250] + "...",
+                        "action": "complete" if "complete" in response.text.lower() else None,
+                        "params": {},
+                        "full_audit_log": response.text,
+                    }
+
+                if not intent.get("action") or intent["action"] == "complete":
+                    snapshot = await self._finalize(
+                        "success", "Task complete.", total_tokens, model_node=last_active_model
+                    )
+                    return _result(snapshot, self.pending_id)
+
+                try:
+                    validation = validate_tenant_intent(
+                        self.tool_map,
+                        intent.get("action"),
+                        intent.get("params", {}),
+                    )
+                except (ValidationError, ValueError, TypeError) as schema_error:
+                    snapshot = await self._finalize(
+                        "blocked",
+                        f"Schema Violation: {schema_error}",
+                        total_tokens,
+                        model_node=last_active_model,
+                    )
+                    return _result(snapshot, self.pending_id)
+                if isinstance(validation, dict):
+                    if not validation.get("valid", False):
+                        snapshot = await self._finalize(
+                            "blocked",
+                            f"Schema Violation: {validation.get('error')}",
+                            total_tokens,
+                            model_node=last_active_model,
+                        )
+                        return _result(snapshot, self.pending_id)
+                elif validation is not True:
+                    snapshot = await self._finalize(
+                        "blocked",
+                        "Schema Violation",
+                        total_tokens,
+                        model_node=last_active_model,
+                    )
+                    return _result(snapshot, self.pending_id)
+
+                await self.evaluate(guards=["fiscal", "judiciary"], intent=intent, value=cost_incurred)
+                self.telemetry.current_session.estimated_cost_usd += cost_incurred
+                result = await self.perform_action(intent.get("action"), intent.get("params", {}))
+                self.telemetry.log_step(intent.get("thought", ""), intent.get("action"), str(result))
+                if intent.get("action") == "execute_financial_transaction":
+                    snapshot = await self._finalize(
+                        "success",
+                        result,
+                        total_tokens,
+                        impact=intent["params"].get("amount", 0.0),
+                        model_node=last_active_model,
+                    )
+                    return _result(snapshot, self.pending_id)
+                current_step += 1
+
+            snapshot = await self._finalize(
+                "timeout", "Max steps reached.", total_tokens, model_node=last_active_model
+            )
+            return _result(snapshot, self.pending_id)
+        except GovernanceViolation as gv:
+            snapshot = await self._finalize("blocked", str(gv), total_tokens, model_node=last_active_model)
+            return _result(snapshot, self.pending_id)
+        except PermissionError as exc:
+            return RunResult("", "denied", str(exc), None)
+        except Exception as exc:
+            snapshot = await self._finalize("error", str(exc), total_tokens, model_node=last_active_model)
+            return _result(snapshot, self.pending_id)
         finally:
-            _REGISTRY_LOCK.release()
+            reset_current_agent(token)
 
 
-def _registry_entry(row: Any) -> dict[str, Any]:
-    schema = None
-    param_schema = row.param_schema if isinstance(getattr(row, "param_schema", None), dict) else {}
-    if param_schema.get("model") == "FinancialTransactionIntent":
-        schema = FinancialTransactionIntent
-    risk = getattr(row, "risk_level", None) or "low"
-    manifest = ToolManifest(
-        name=row.name,
-        description=getattr(row, "description", None) or row.name,
-        risk_level=risk,
-        oci_repository=getattr(row, "oci_repository", None),
-        artifact_digest=getattr(row, "artifact_digest", None),
+def _result(snapshot, pending_id: str | None) -> RunResult:
+    return RunResult(
+        trace_id=snapshot.trace_id,
+        status=snapshot.status,
+        output="" if snapshot.output is None else str(snapshot.output),
+        approval_request_id=pending_id,
     )
-    return {
-        "func": _noop,
-        "manifest": manifest,
-        "schema": schema,
-        "risk_level": risk,
-        "cost_usd": 0.0,
-    }
-
-
-def _noop(*args, **kwargs):
-    return None
 
 
 def _latest_usage(router) -> tuple[int, str]:
