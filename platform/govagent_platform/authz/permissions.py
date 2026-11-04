@@ -1,0 +1,42 @@
+"""Permission strings shared by the API and the seed migration."""
+
+PLATFORM_TENANTS_READ = "platform.tenants.read"
+PLATFORM_TENANTS_WRITE = "platform.tenants.write"
+PLATFORM_PLANS_WRITE = "platform.plans.write"
+PLATFORM_POLICIES_WRITE = "platform.policies.write"
+PLATFORM_AUDIT_READ_META = "platform.audit.read_meta"
+PLATFORM_BREAK_GLASS = "platform.break_glass"
+
+PLATFORM_PERMISSIONS = (
+    PLATFORM_TENANTS_READ,
+    PLATFORM_TENANTS_WRITE,
+    PLATFORM_PLANS_WRITE,
+    PLATFORM_POLICIES_WRITE,
+    PLATFORM_AUDIT_READ_META,
+    PLATFORM_BREAK_GLASS,
+)
+
+TENANT_USERS_WRITE = "tenant.users.write"
+TENANT_ROLES_WRITE = "tenant.roles.write"
+TENANT_POLICIES_WRITE = "tenant.policies.write"
+TENANT_AGENTS_WRITE = "tenant.agents.write"
+TENANT_TOOLS_WRITE = "tenant.tools.write"
+TENANT_HITL_CONFIGURE = "tenant.hitl.configure"
+TENANT_SINKS_WRITE = "tenant.sinks.write"
+TENANT_AUDIT_READ = "tenant.audit.read"
+TENANT_RUNTIME_EVALUATE = "tenant.runtime.evaluate"
+
+TENANT_PERMISSIONS = (
+    TENANT_USERS_WRITE,
+    TENANT_ROLES_WRITE,
+    TENANT_POLICIES_WRITE,
+    TENANT_AGENTS_WRITE,
+    TENANT_TOOLS_WRITE,
+    TENANT_HITL_CONFIGURE,
+    TENANT_SINKS_WRITE,
+    TENANT_AUDIT_READ,
+    TENANT_RUNTIME_EVALUATE,
+)
+
+TENANT_ADMIN_PERMISSIONS = TENANT_PERMISSIONS
+TENANT_AUDITOR_PERMISSIONS = (TENANT_AUDIT_READ,)
