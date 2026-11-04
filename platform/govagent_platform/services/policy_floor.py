@@ -97,5 +97,7 @@ def ensure_library_accepts(document: dict[str, Any]) -> None:
         raise PolicyDocumentRejected("Policy document must be an object")
     try:
         Policy(document)
+    except PermissionError:
+        raise
     except Exception as exc:
         raise PolicyDocumentRejected(str(exc)) from exc

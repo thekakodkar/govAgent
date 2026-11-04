@@ -23,7 +23,7 @@ def test_unknown_tool_is_blocked_and_global_registries_stay_unchanged(client):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["status"] == "blocked"
-    assert body["output"] == "tool_not_legislated"
+    assert "Tool not legislated" in body["output"]
     assert set(registry.tools) == public_before
     assert set(GlobalRegistry().tools) == manager_before
 

@@ -35,6 +35,22 @@ async def evaluate_agent(session: Session, actor: Actor, agent_id: UUID, task: s
         policy = hydrate_policy(policy_row.document)
     except PolicyDocumentRejected as exc:
         raise ServiceError(422, exc.message) from exc
+    except PermissionError as exc:
+        write_audit(
+            session,
+            actor=actor,
+            action="runtime.evaluate",
+            target_type="agent",
+            target_id=str(agent_row.id),
+            after={"status": "denied", "reason": str(exc)},
+            tenant_id=actor.tenant_id,
+        )
+        return {
+            "trace_id": None,
+            "status": "denied",
+            "output": str(exc),
+            "approval_request_id": None,
+        }
 
     tools = load_tool_map(list(session.scalars(select(ToolManifestRow)).all()))
     all_time, today = opening_balances(session)

@@ -18,6 +18,8 @@ class ScriptedLLMClient(BaseLLMClient):
     def __init__(self, config: dict | None = None):
         super().__init__(config or {})
         self.calls = 0
+        self.last_tokens = 0
+        self.last_model = "scripted"
 
     async def generate(self, request: LLMRequest) -> LLMResponse:
         self.calls += 1
@@ -26,12 +28,17 @@ class ScriptedLLMClient(BaseLLMClient):
             raw = request.prompt.split(_MARKER, 1)[1].split(_END, 1)[0]
             payload = json.loads(raw)
         if self.calls == 1 and payload.get("tool"):
+            tokens = int(payload.get("tokens") or 10)
+            self.last_tokens = tokens
+            self.last_model = "scripted"
             return LLMResponse(
                 text=str(payload.get("thought") or "proceed"),
                 tool_calls=[{"name": payload["tool"], "args": payload.get("args") or {}}],
-                raw_usage={"total_tokens": int(payload.get("tokens") or 10)},
+                raw_usage={"total_tokens": tokens},
                 model_name="scripted",
             )
+        self.last_tokens = 1
+        self.last_model = "scripted"
         return LLMResponse(
             text="complete",
             tool_calls=[],
