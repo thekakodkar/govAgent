@@ -1,0 +1,20 @@
+# Local Postgres for the govagent-platform control plane.
+# The password below is a local-development default only. Do not reuse it anywhere else.
+# govagent_owner and govagent_app are created by Alembic, not by this file.
+
+name: govagent-platform
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: govagent_platform
+    ports:
+      - "54329:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d govagent_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 20

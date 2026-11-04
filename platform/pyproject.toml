@@ -1,0 +1,31 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "govagent-platform"
+version = "0.1.0"
+description = "Enterprise control plane for tenants, identity, and audit. Not the govagent library published on PyPI."
+authors = ["Niraj Kakodkar <niraj.kakodkar@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "govagent_platform" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+govagent = { path = "..", develop = true }
+fastapi = ">=0.100.0"
+uvicorn = ">=0.22.0"
+sqlalchemy = ">=2.0.0"
+alembic = ">=1.13.0"
+psycopg = { version = ">=3.1.0", extras = ["binary"] }
+pydantic = ">=2.0.0"
+bcrypt = ">=4.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0"
+pytest-asyncio = ">=0.21.0"
+httpx = ">=0.25.0"
+
+[tool.pytest.ini_options]
+pythonpath = [".", "../src"]
+asyncio_mode = "auto"
