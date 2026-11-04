@@ -1,6 +1,7 @@
 import os
 import logging
 from typing import List, Optional, Any, Dict
+from pydantic import ValidationError
 from govagent.policy import Policy
 from govagent.guards import CircuitBreaker, GovernanceViolation, SemanticGuard
 from govagent.telemetry import TelemetryManager
@@ -158,12 +159,34 @@ class ExecutiveAgent:
                     return await self._finalize("success", "Task complete.", total_tokens, model_node=last_active_model)
 
                 # STAGE 1: Schema Validation
-                validation = registry.validate_intent_schema(
-                    intent.get("action"), 
-                    intent.get("params", {})
-                )
-                if not validation.get("valid"):
-                    return await self._finalize(f"blocked", f"Schema Violation: {validation.get('error')}", total_tokens, model_node=last_active_model)
+                # 3.0.2 returns a dict. Unpublished builds returned True. Accept both.
+                try:
+                    validation = registry.validate_intent_schema(
+                        intent.get("action"),
+                        intent.get("params", {}),
+                    )
+                except (ValidationError, ValueError, TypeError) as schema_error:
+                    return await self._finalize(
+                        "blocked",
+                        f"Schema Violation: {schema_error}",
+                        total_tokens,
+                        model_node=last_active_model,
+                    )
+                if isinstance(validation, dict):
+                    if not validation.get("valid", False):
+                        return await self._finalize(
+                            "blocked",
+                            f"Schema Violation: {validation.get('error')}",
+                            total_tokens,
+                            model_node=last_active_model,
+                        )
+                elif validation is not True:
+                    return await self._finalize(
+                        "blocked",
+                        "Schema Violation",
+                        total_tokens,
+                        model_node=last_active_model,
+                    )
 
                 # STAGE 2: Evaluation (Circuit Breaker)
                 await self.evaluate(guards=["fiscal", "judiciary"], intent=intent, value=cost_incurred)

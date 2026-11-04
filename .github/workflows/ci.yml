@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install package
+        run: poetry install --with dev --extras "crewai enterprise" --no-interaction --no-ansi
+      - name: Download spaCy model
+        run: poetry run python -m spacy download en_core_web_lg
+      - name: Test
+        run: poetry run pytest -v --tb=short --asyncio-mode=auto

@@ -43,3 +43,5 @@ def test_meta_governor_triggers_amendment(mock_audit_ledger):
     assert analysis["target_policy"] == "finance_policy.yaml"
     # Smart calculation verification: 150.0 average overrun * 1.1 safety margin = 165.00
     assert analysis["proposed_limit"] == 165.00
+    assert analysis["timestamp"].endswith("Z")
+    assert "+00:00" not in analysis["timestamp"]

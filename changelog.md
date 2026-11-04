@@ -4,6 +4,16 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ---
 
+## [3.0.3] - 2026-11-04
+### Compatible fix release
+
+- **Execute loop:** `ExecutiveAgent.execute` accepts both the 3.0.2 dict from `validate_intent_schema` and a boolean. Invalid amounts and schemas finish as `blocked` instead of `error`.
+- **One public registry:** `from govagent import tool, registry` is again the 3.0.2 singleton (`registry.manager.GlobalRegistry`), including Harbor `verify_and_resolve_tool` and dict validation results. `schema=` and `FinancialTransactionIntent` are additive. A non-empty policy allow-list now raises `PermissionError` for a registered tool that is not on that list (stricter than the 3.0.2 print-only check).
+- **Snapshots:** optional forensic fields on `govagent.registry.schemas.ExecutionSnapshot` keep their defaults. `output` may be omitted. No new required field.
+- **Timestamps:** federated audit payloads and policy-amendment proposals use timezone-aware UTC and still end in `Z`.
+- **Docs and repo dev stack:** README samples match `RoutingMode`, `Policy.from_yaml`, and `execute`. Presidio's model is `en_core_web_lg`. `docs/index.html` no longer contains merge markers or fictional imports. `Dockerfile` is a repo dev image, not the minimal wheel. Compose starts the Next.js app from `/app`. GitHub Actions runs the library suite.
+- **Not stable API in 3.0.3:** `govagent.governance.cfo_analytics` and `govagent.governance.evidence` are not exported. They are planned for 3.1.0.
+
 ## [3.0.0] - 2026-07-07
 ### "Sovereign Supply Chain & Enterprise Mesh" Release
 
