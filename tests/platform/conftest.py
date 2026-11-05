@@ -14,9 +14,20 @@ from types import SimpleNamespace
 
 import pytest
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-for _path in (_REPO_ROOT, _REPO_ROOT / "platform", _REPO_ROOT / "src"):
-    if str(_path) not in sys.path:
+def _locate_roots() -> tuple[Path, Path, Path | None]:
+    """Monorepo today, platform repo root after tests/platform is moved to tests/."""
+
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "platform" / "govagent_platform").is_dir() and (parent / "src" / "govagent").is_dir():
+            return parent, parent / "platform", parent / "src"
+        if (parent / "govagent_platform").is_dir() and (parent / "alembic.ini").is_file():
+            return parent, parent, None
+    raise RuntimeError("govagent-platform root was not found")
+
+
+_REPO_ROOT, _PLATFORM_ROOT, _SRC_ROOT = _locate_roots()
+for _path in (_REPO_ROOT, _PLATFORM_ROOT, _SRC_ROOT):
+    if _path is not None and str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
 def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
@@ -42,7 +53,7 @@ def platform_database():
     from alembic.config import Config
     from sqlalchemy import create_engine, text
 
-    platform_root = Path(__file__).resolve().parents[2] / "platform"
+    platform_root = _PLATFORM_ROOT
     cfg = Config(str(platform_root / "alembic.ini"))
     cfg.set_main_option("script_location", str(platform_root / "migrations"))
 

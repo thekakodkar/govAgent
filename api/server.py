@@ -367,8 +367,9 @@ async def evaluate_workflow_intent(payload: GovernanceRequest):
         threshold = float(raw_dict["alignment"].get("min_similarity_score", threshold))
 
     alignment_score = agent.semantic_guard.evaluate_alignment(sanitized_task)
-
-    if is_prohibited_marker or alignment_score < threshold:
+    # SemanticGuard already applies alignment.min_similarity_score and returns
+    # 0.0 on a breach. The other return values are a margin, not a raw score.
+    if is_prohibited_marker or alignment_score == 0.0:
         block_msg = (
             "SECURITY VIOLATION (Zero-Trust Identity Guard): Unauthorized privilege escalation attempt intercepted."
             if is_prohibited_marker

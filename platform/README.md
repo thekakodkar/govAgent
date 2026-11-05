@@ -52,7 +52,18 @@ Platform tests are not collected unless `PLATFORM_TEST_DATABASE_URL` is set, so 
 
 `POST /tenant/v1/agents/{agent_id}/evaluate` runs `TenantExecutiveAgent`, a subclass of `ExecutiveAgent`. The loop matches govagent 3.0.3 `execute`. Schema checks call `GlobalRegistry.validate_intent_schema` with a private object that holds only that request's tool map. The process-global registry is not modified.
 
-This package is version 0.4.0. It is not published to PyPI. Customers get a container image tagged `govagent-platform:0.4.0` or an install from a private index. The image installs `govagent[enterprise]==3.0.3` from PyPI, which satisfies `govagent>=3.0.3,<3.1.0`. Do not add a job that uploads this package to `upload.pypi.org`.
+This package is version 0.4.0. It is not published to PyPI. Customers get a container image tagged `govagent-platform:0.4.0` or an install from a private index. The image installs `govagent[enterprise]==3.0.3` from PyPI until 3.1.0 is published. The accepted range is `govagent>=3.0.3,<3.2.0`. Do not add a job that uploads this package to `upload.pypi.org`.
+
+## Moving this directory into its own repository
+
+`platform/` is the standalone root. It already has `pyproject.toml`, `README.md`, `Dockerfile`, `docker-compose.yml`, `migrations/`, `govagent_platform/`, and `ui/`. The tests currently live at `../tests/platform` so the library suite can ignore them unless `PLATFORM_TEST_DATABASE_URL` is set.
+
+To make a private repo whose root is this package:
+
+1. Copy the contents of `platform/` to the new repository root.
+2. Move `tests/platform/` to `tests/` in that repository. `tests/platform/conftest.py` already accepts both layouts: this monorepo, and a repo whose root contains `govagent_platform/` and `alembic.ini`.
+3. Replace the path dependency in `pyproject.toml` with `govagent = ">=3.0.3,<3.2.0"`. Until 3.1.0 is on PyPI, install `govagent[enterprise]==3.0.3` the way `Dockerfile` does.
+4. Leave this copy in place until that repository exists. Do not publish the package to PyPI.
 
 `PLATFORM_LLM_PROVIDER` defaults to `scripted`. Set it to `ollama` to use `OllamaClient` (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`). Constructing an agent loads Presidio, which expects the `en_core_web_lg` spaCy model, and SentenceTransformers from the `govagent[enterprise]` extra.
 

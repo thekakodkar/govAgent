@@ -114,6 +114,8 @@ class Role(Base):
     )
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    display_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    external_id: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class RolePermission(Base):

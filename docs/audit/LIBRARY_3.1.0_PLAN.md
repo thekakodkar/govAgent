@@ -1,6 +1,6 @@
 # govagent 3.1.0 plan
 
-Status: documentation only. Do not implement this file in the 3.0.3 line, and do not publish it from the platform work.
+Status: implemented in the working tree as library `3.1.0`. It is not tagged and it is not published. The platform pin is `govagent>=3.0.3,<3.2.0`. `platform/Dockerfile` stays on PyPI `govagent[enterprise]==3.0.3` until that publish exists.
 
 The platform stays pinned to `govagent>=3.0.3,<3.1.0` until this release exists and the platform suite has been run against it. None of the items below are backward-compatible with the behavior 3.0.3 documents today.
 

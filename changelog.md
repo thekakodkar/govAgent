@@ -4,6 +4,13 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ---
 
+## [3.1.0] - 2026-11-05
+### Behavior changes (not yet published or tagged)
+
+- **Policy projection:** `Policy` copies `fiscal_governance.global_limits` onto `global_limits`, including `recursive_tco_limit` as `recursive_tco_ceiling`, and copies `alignment` onto `policy.alignment`. A top-level `global_limits` key still wins for the keys it sets. `ExecutiveAgent`, `CircuitBreaker`, and `SemanticGuard` therefore enforce the ceilings and mission in `policies/*.yaml` without a platform-side patch. Documents that omit both the top-level and nested blocks keep the previous default daily budget of `10.0`.
+- **Public governance exports:** `govagent.governance` now exports `CFOAnalyticsEngine`, `EvidencePackGenerator`, and `ComplianceDossier` in addition to `MetaGovernor`. `EvidencePackGenerator.generate` still reads a JSONL buffer and is not tenant-aware.
+- **Harbor fail-closed:** `HarborVerifier` calls the Harbor v2 artifact API when `HARBOR_ROBOT_TOKEN` is not the offline `mock-token` stub. Unreachable Harbor, a non-200 response, a missing scan, a missing signature, or a high/critical vulnerability returns `verified: false`. The `mock-token` stub remains for unit tests and no longer returns `PRODUCTION_BYPASS`.
+
 ## [3.0.3] - 2026-11-04
 ### Compatible fix release
 

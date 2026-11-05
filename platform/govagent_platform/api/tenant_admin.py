@@ -18,7 +18,18 @@ from govagent_platform.authz.permissions import (
 from govagent_platform.domain.models import AuditEvent
 from govagent_platform.security.context import Actor
 from govagent_platform.security.dependencies import get_db, require
-from govagent_platform.services.scim import create_user, get_user, list_groups, list_users, replace_user
+from govagent_platform.services.scim import (
+    create_group,
+    create_user,
+    delete_group,
+    get_group,
+    get_user,
+    list_groups,
+    list_users,
+    patch_group,
+    replace_group,
+    replace_user,
+)
 from govagent_platform.services.memberships import (
     MembershipServiceError,
     create_identity,
@@ -62,6 +73,18 @@ class ScimUserBody(BaseModel):
     displayName: str | None = None
     externalId: str | None = None
     active: bool | None = None
+
+
+class ScimGroupBody(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    displayName: str | None = None
+    externalId: str | None = None
+    members: list | None = None
+
+
+class ScimPatchBody(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    Operations: list = Field(default_factory=list)
 
 
 def _membership_error(exc: MembershipServiceError) -> HTTPException:
@@ -214,10 +237,78 @@ def put_scim_user(
 
 
 @router.get("/scim/v2/Groups")
-def get_scim_groups(actor: Actor = Depends(require(TENANT_USERS_WRITE))):
-    if actor.tenant_id is None:
-        raise HTTPException(status_code=403, detail="Tenant scope is required")
-    return list_groups()
+def get_scim_groups(
+    filter: str | None = None,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return list_groups(session, actor, query_filter=filter)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.post("/scim/v2/Groups", status_code=201)
+def post_scim_group(
+    body: ScimGroupBody,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return create_group(session, actor, body.model_dump(exclude_unset=True))
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.get("/scim/v2/Groups/{group_id}")
+def get_scim_group(
+    group_id: UUID,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return get_group(session, actor, group_id)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.put("/scim/v2/Groups/{group_id}")
+def put_scim_group(
+    group_id: UUID,
+    body: ScimGroupBody,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return replace_group(session, actor, group_id, body.model_dump(exclude_unset=True))
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.patch("/scim/v2/Groups/{group_id}")
+def patch_scim_group(
+    group_id: UUID,
+    body: ScimPatchBody,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        return patch_group(session, actor, group_id, body.Operations)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+
+@router.delete("/scim/v2/Groups/{group_id}", status_code=204)
+def delete_scim_group(
+    group_id: UUID,
+    actor: Actor = Depends(require(TENANT_USERS_WRITE)),
+    session: Session = Depends(get_db),
+):
+    try:
+        delete_group(session, actor, group_id)
+    except ServiceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    return None
 
 
 @router.get("/audit-events")

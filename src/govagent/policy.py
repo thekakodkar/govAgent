@@ -21,12 +21,13 @@ class Policy:
         self.default_provider = self.infra_settings.get("default_provider", "local_ollama")
         self.routing_rules = self.infra_settings.get("rules", [])
 
-        # Global Fiscal & Operational Ceilings
-        self.global_limits = config.get("global_limits", {
-            "daily_budget_usd": 10.0,
-            "max_per_transaction": 2000.0,
-            "max_tokens_per_run": 4000
-        })
+        # Global Fiscal & Operational Ceilings.
+        # A top-level global_limits key overrides the same key nested under
+        # fiscal_governance. Keys that were not set at the top level come from
+        # that nested block, so policies/*.yaml enforce their ceilings.
+        self.global_limits = _project_global_limits(config)
+        alignment = config.get("alignment")
+        self.alignment = alignment if isinstance(alignment, dict) else {}
         
         # Judiciary Handshake Settings
         self.judiciary_settings = config.get("judiciary", {
@@ -81,3 +82,24 @@ class Policy:
         if rule.get("require_human_approval") or rule.get("risk_level") == "high":
             return True
         return False
+
+
+def _project_global_limits(config: Dict[str, Any]) -> Dict[str, Any]:
+    defaults = {
+        "daily_budget_usd": 10.0,
+        "max_per_transaction": 2000.0,
+        "max_tokens_per_run": 4000,
+    }
+    top = config.get("global_limits")
+    explicit = top if isinstance(top, dict) else {}
+    limits = dict(explicit) if isinstance(top, dict) else dict(defaults)
+    fiscal = config.get("fiscal_governance")
+    nested = fiscal.get("global_limits") if isinstance(fiscal, dict) else None
+    if not isinstance(nested, dict):
+        return limits
+    for key, value in nested.items():
+        target = "recursive_tco_ceiling" if key == "recursive_tco_limit" else key
+        if key in explicit or target in explicit:
+            continue
+        limits[target] = value
+    return limits

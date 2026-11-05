@@ -1,5 +1,5 @@
-# Release image for govagent-platform 0.3.0.
-# Installs govagent from PyPI. It does not copy src/govagent and it does not use the path dependency.
+# Release image. Installs govagent from PyPI. It does not copy src/govagent.
+# Stay on 3.0.3 here until 3.1.0 is published. The accepted range is >=3.0.3,<3.2.0.
 FROM python:3.12-slim
 
 WORKDIR /app

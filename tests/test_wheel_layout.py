@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BANNED = ("platform/", "govagent_platform", "src/app/", "api/server.py")
 
 
-def test_library_archives_exclude_platform_and_unexported_governance():
+def test_library_archives_exclude_platform_and_export_governance():
     poetry = shutil.which("poetry") or str(Path.home() / ".local" / "bin" / "poetry")
     out = ROOT / ".wheel-layout"
     if out.exists():
@@ -28,8 +28,9 @@ def test_library_archives_exclude_platform_and_unexported_governance():
             for banned in BANNED:
                 assert banned not in joined, f"{archive.name} contains {banned}"
             init_text = _governance_init(archive)
-            assert "CFOAnalyticsEngine" not in init_text
-            assert "EvidencePackGenerator" not in init_text
+            assert "CFOAnalyticsEngine" in init_text
+            assert "EvidencePackGenerator" in init_text
+            assert "ComplianceDossier" in init_text
     finally:
         shutil.rmtree(out, ignore_errors=True)
 
