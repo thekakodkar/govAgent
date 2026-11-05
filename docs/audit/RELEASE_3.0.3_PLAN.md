@@ -1,5 +1,7 @@
 # govagent 3.0.3 library fix plan
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. This document is the library release plan.
+
 Status: plan only. Do not bump `pyproject.toml`, do not build a wheel, and do not publish to PyPI or TestPyPI as part of this document.
 
 This release is the first publish after PyPI `govagent==3.0.2` (2026-07-07). The git tree at `main` is still version `3.0.2` and is not the same code as that wheel. `3.0.3` should be a **compatible fix release**. New product modules that are not required to fix a regression wait for `3.1.0`.

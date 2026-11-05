@@ -1,5 +1,7 @@
 # GovAgent Phase 0 audit and architecture proposal
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. Paths below that begin with `platform/` or `tests/platform/` describe the tree before that move.
+
 Status: documentation only. This pull request does not change the `govagent` package, the FastAPI gateway, the Next.js UI, tests, or policies.
 
 Audience: the maintainer deciding how an enterprise control plane should sit on the existing library.

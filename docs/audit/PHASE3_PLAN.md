@@ -1,5 +1,7 @@
 # Phase 3 plan: private platform distribution, quotas, and tenant evidence
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. Paths below that begin with `platform/` or `tests/platform/` describe the tree before that move. This public repository is the `govagent` library. Its CI does not build `platform/ui`.
+
 Status: plan only. This commit does not add runtime code, a CI change, or a package publish.
 
 `govagent-platform` will **not** be published to PyPI. Customers receive it as a container image and, if they want a Python install, from a **private package index**. The open-source library stays on PyPI as `govagent`.

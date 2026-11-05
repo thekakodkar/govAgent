@@ -1,5 +1,7 @@
 # GovAgent enterprise target architecture
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. These diagrams are the Phase 0 proposal.
+
 These diagrams are the Phase 0 proposal. They describe a control plane that calls the existing `govagent` library. They do not replace that library.
 
 ## Runtime and administration

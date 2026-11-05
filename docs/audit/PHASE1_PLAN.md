@@ -1,5 +1,7 @@
 # Phase 1 implementation plan
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. Paths below that begin with `platform/` or `tests/platform/` describe the tree before that move.
+
 Companion to [PHASE0_AUDIT.md](PHASE0_AUDIT.md) and [diagrams/target-architecture.md](diagrams/target-architecture.md).
 
 Phase 1 builds the enterprise foundation beside the existing library: a database, forced tenant isolation, identity, the split between platform administration and tenant administration, and an append-only audit log. It does not reimplement guards, the fiscal ledger, HITL weight math, telemetry exporters, or the demo gateway.

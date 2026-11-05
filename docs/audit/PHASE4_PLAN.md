@@ -1,8 +1,8 @@
 # Phase 4 plan: SCIM, dedicated schema, and retention
 
-Status: implemented on `main`. `dedicated_db` stays unavailable. This is a settled decision: the control plane keeps one shared database plus optional `dedicated_schema` promotion, and it will not provision a database per tenant.
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform (`main` `f153f6e`). Paths below that begin with `platform/` or `tests/platform/` describe the tree before that move.
 
-Phase 3 on `main` is platform `0.3.0`. It enforces quotas, exports evidence from stored rows, and rejects `dedicated_schema` and `dedicated_db` on create. Phase 4 stays in this repository. It does not publish `govagent-platform` to PyPI, does not move the library tag, and does not change `src/govagent`.
+Status: implemented, then moved to the private repository. `dedicated_db` stays unavailable. This is a settled decision: the control plane keeps one shared database plus optional `dedicated_schema` promotion, and it will not provision a database per tenant.
 
 ## SCIM on the membership tables
 
@@ -52,4 +52,4 @@ Create still rejects a non-shared tier. Promotion is a separate operator call.
 | SCIM group writes | Settled yes. Groups are tenant roles and `membership_roles`. |
 | Delete or rewrite audit or ledger rows | Settled never. `20261108_0007` revokes those privileges. |
 | Library 3.1.0 | Approved separately. Policy projection, governance exports, and the Harbor client are in `src/govagent` and are not tagged or published. |
-| Move `platform/` out of this repo | Not yet. The package is ready to copy, and `platform/` stays here until the private repo exists. |
+| Move `platform/` out of this repo | Done. The source is https://github.com/thekakodkar/govagent-platform. |

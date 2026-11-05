@@ -1,5 +1,7 @@
 # Phase 2 plan: tenant runtime, tool map, and durable HITL
 
+> The control plane is no longer in this public repository. `govagent-platform` is at https://github.com/thekakodkar/govagent-platform. Paths below that begin with `platform/` or `tests/platform/` describe the tree before that move.
+
 Status: plan only. This pull request does not add runtime code.
 
 Base: Phase 1 control plane on `cursor/phase1-platform-foundation-5c7a` ([PR #3](https://github.com/thekakodkar/govAgent/pull/3)). The Phase 0 backlog is the one written in [PR #2](https://github.com/thekakodkar/govAgent/pull/2) (`docs/audit/PHASE0_AUDIT.md` on that branch). Items 3, 4, and 5 from that backlog are this phase. Item 2 (changing `Policy` so it reads `fiscal_governance` and `alignment`) is deliberately not in the implementation set. The reasons are in the compatibility section.
