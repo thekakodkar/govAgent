@@ -14,7 +14,7 @@ packages = [{ include = "govagent_platform" }]
 python = ">=3.10,<3.14"
 # Release range: govagent>=3.0.3,<3.2.0.
 # Checkouts keep the path dependency so local 3.1.0 is what tests import.
-# platform/Dockerfile still installs PyPI govagent[enterprise]==3.0.3 until 3.1.0 is published.
+# platform/Dockerfile installs that same range from PyPI.
 govagent = { path = "..", develop = true, extras = ["enterprise"] }
 fastapi = ">=0.100.0"
 uvicorn = ">=0.22.0"

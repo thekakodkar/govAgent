@@ -1,6 +1,6 @@
-<img width="2071" height="795" alt="logo" src="https://github.com/user-attachments/assets/7aed634c-34e0-450c-9a7e-ee03ecd26ea5" />
+<img width="100%" alt="govAgent logo" src="https://github.com/user-attachments/assets/7aed634c-34e0-450c-9a7e-ee03ecd26ea5" />
 
-# govAgent (v3.0.3)
+# govAgent (v3.1.0)
 
 **The Governance-First Control Plane for AI Agents & Swarms**
 
@@ -163,7 +163,7 @@ python -m spacy download en_core_web_lg
 uvicorn api.server:app --host 127.0.0.1 --port 8000
 npm run dev
 ```
-## 🏗️ Core Pillars: The v3.0.3 Sovereign Architecture
+## 🏗️ Core Pillars: The v3.1.0 Sovereign Architecture
 GovAgent utilizes a highly modular package structure to enforce a strict "Separation of Duties" across any enterprise application vertical:
 
 **govagent.context (The State):** Manages thread-safe session isolation, asynchronous parent-to-child trace propagation, and live cumulative Total Cost of Operation (TCO) calculation matrices across decentralized agent swarms.
@@ -200,7 +200,7 @@ async def process_payment(amount: float, reference_id: str):
     """Executes a disbursement following corporate policy and OCI container validation."""
     return f"SUCCESS: Transacted ${amount} for Ref: {reference_id}"
 ```
-### Bootstrap an Executive Agent (v3.0.3 Pluggable Router Pattern)
+### Bootstrap an Executive Agent (v3.1.0 Pluggable Router Pattern)
 
 ```python
 import asyncio
@@ -271,7 +271,7 @@ Every session generates an immutable snapshot routed directly to external cloud 
 
 In an institutional setting, "State Management" is insufficient; you require Sovereignty. GovAgent v1.0.0 is engineered horizontally to transform "Black Box" multi-agent workflows into transparent, compliance-vetted execution lifecycles across all commercial sectors.
 
-| Feature | **GovAgent v3.0.3** | LangGraph | Standard Orchestrators |
+| Feature | **GovAgent v3.1.0** | LangGraph | Standard Orchestrators |
 | --- | --- | --- | --- |
 | **Architectural Scope** | ✅ **Modular Control Plane** | ⚠️ Local State Graph | ❌ Ad-Hoc Swarm Execution |
 | **State Management** | ✅ **Isolated Fiscal Ledger** | ⚠️ Shared Thread State | ❌ Global context |
@@ -419,6 +419,6 @@ We enforce a strict branching strategy to keep `main` stable:
 
 ---
 ### Author Stamp
-*   **Framework:** GovAgent v3.0.3 
+*   **Framework:** GovAgent v3.1.0 
 *   **Compliance:** Designed for Article 9, 12, and 14 Accountability
 *   **Status:** Active / Open-Source Standard

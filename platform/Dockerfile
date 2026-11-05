@@ -1,11 +1,11 @@
 # Release image. Installs govagent from PyPI. It does not copy src/govagent.
-# Stay on 3.0.3 here until 3.1.0 is published. The accepted range is >=3.0.3,<3.2.0.
+# Resolves 3.1.0 once that release is on PyPI, and still accepts 3.0.3 before then.
 FROM python:3.12-slim
 
 WORKDIR /app
 
 RUN pip install --no-cache-dir \
-    "govagent[enterprise]==3.0.3" \
+    "govagent[enterprise]>=3.0.3,<3.2.0" \
     "fastapi>=0.100.0" \
     "uvicorn>=0.22.0" \
     "sqlalchemy>=2.0.0" \
