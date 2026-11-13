@@ -1,196 +1,1658 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>govagent | Agentic Governance Framework</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>govAgent v3.1.0 | Library Documentation &amp; Architecture Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
     <style>
-        body { font-family: system-ui, -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif; }
+        :root {
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-sidebar: #090d16;
+            --bg-code: #0f172a;
+            --bg-output: #0b1120;
+            --text-main: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --text-sidebar: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-soft: #eff6ff;
+            --accent-border: #bfdbfe;
+            --border: #e2e8f0;
+            --border-subtle: #f1f5f9;
+            --success: #059669;
+            --warning: #d97706;
+            --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.03);
+            --shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.05), 0 1px 3px -1px rgba(15, 23, 42, 0.03);
+            --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 74px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.65;
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.55);
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #090d16 0%, #0f172a 100%);
+            color: var(--text-sidebar);
+            padding: 1.5rem 0.9rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+        }
+
+        body.sidebar-collapsed aside {
+            width: var(--sidebar-collapsed);
+            padding: 1.5rem 0.6rem;
+        }
+
+        .brand-box {
+            margin-bottom: 1.5rem;
+            padding: 0 0.35rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .brand-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            min-height: 36px;
+        }
+
+        body.sidebar-collapsed .brand-top {
+            justify-content: center;
+        }
+
+        .brand-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        body.sidebar-collapsed .brand-title-wrap,
+        body.sidebar-collapsed .brand-sub,
+        body.sidebar-collapsed .nav-title,
+        body.sidebar-collapsed .nav-label,
+        body.sidebar-collapsed .ext-label {
+            display: none;
+        }
+
+        .brand {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.03em;
+        }
+
+        .badge-version {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            font-size: 0.68rem;
+            padding: 0.16rem 0.52rem;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.45);
+        }
+
+        .brand-sub {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.45;
+            margin-top: 0.45rem;
+        }
+
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .toggle-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.25s ease;
+        }
+
+        body.sidebar-collapsed .toggle-btn svg {
+            transform: rotate(180deg);
+        }
+
+        .nav-group {
+            margin-bottom: 1.35rem;
+        }
+
+        .nav-title {
+            font-size: 0.66rem;
+            text-transform: uppercase;
+            letter-spacing: 0.11em;
+            color: #475569;
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+            padding-left: 0.75rem;
+        }
+
+        aside ul {
+            list-style: none;
+        }
+
+        aside li {
+            margin-bottom: 0.2rem;
+        }
+
+        aside a.nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.52rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+
+        body.sidebar-collapsed aside a.nav-link {
+            justify-content: center;
+            padding: 0.6rem 0;
+        }
+
+        aside a.nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #f8fafc;
+        }
+
+        aside a.nav-link.active {
+            background-color: rgba(37, 99, 235, 0.16);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        aside a.nav-link.active .nav-icon {
+            color: #60a5fa;
+        }
+
+        .nav-icon {
+            width: 17px;
+            height: 17px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .sidebar-links {
+            padding-top: 1.1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .ext-link {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.83rem;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        body.sidebar-collapsed .ext-link {
+            justify-content: center;
+            padding: 0.55rem 0;
+        }
+
+        .ext-link:hover {
+            background: rgba(37, 99, 235, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #ffffff;
+        }
+
+        .ext-link svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        main {
+            margin-left: var(--sidebar-width);
+            padding: 3rem 4rem;
+            max-width: calc(100% - var(--sidebar-width));
+            width: 100%;
+            transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.sidebar-collapsed main {
+            margin-left: var(--sidebar-collapsed);
+            max-width: calc(100% - var(--sidebar-collapsed));
+        }
+
+        .content-container {
+            max-width: 1040px;
+            margin: 0 auto;
+        }
+
+        /* Hero Banner */
+        header.hero {
+            background: radial-gradient(circle at top right, #eff6ff 0%, #ffffff 55%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.75rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header.hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #0284c7, #059669);
+        }
+
+        .hero-eyebrow {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 0.65rem;
+        }
+
+        header.hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.85rem;
+            letter-spacing: -0.03em;
+            line-height: 1.18;
+        }
+
+        header.hero p {
+            color: var(--text-secondary);
+            font-size: 1.03rem;
+            max-width: 780px;
+            line-height: 1.65;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1.6rem;
+        }
+
+        .hero-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.1rem;
+            border-radius: 9px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .hero-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-btn.primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .hero-btn.primary:hover {
+            background: var(--accent-hover);
+            color: #ffffff;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-top: 1.5rem;
+            padding-top: 1.35rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .pill {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 0.28rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+        }
+
+        /* Sections & Typography */
+        section {
+            margin-bottom: 3.5rem;
+            scroll-margin-top: 2rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        h3 {
+            font-size: 1.06rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 1.5rem 0 0.6rem;
+            letter-spacing: -0.01em;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.96rem;
+        }
+
+        ol.flow-list {
+            margin: 0.75rem 0 1.35rem 1.35rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        ol.flow-list li {
+            margin-bottom: 0.45rem;
+            padding-left: 0.35rem;
+        }
+
+        /* Tables */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            box-shadow: var(--shadow-sm);
+            margin: 1.25rem 0 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.89rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.88rem 1.1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            line-height: 1.55;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.77rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        code.inline {
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 0.14rem 0.42rem;
+            border-radius: 5px;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+            font-size: 0.82em;
+            font-weight: 500;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Callout Banners */
+        .note, .warn {
+            border-radius: var(--radius-md);
+            padding: 1rem 1.2rem;
+            margin: 1.1rem 0 1.35rem;
+            color: var(--text-secondary);
+            font-size: 0.91rem;
+            line-height: 1.6;
+        }
+
+        .note {
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-border);
+            border-left: 4px solid var(--accent);
+        }
+
+        .warn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 4px solid var(--warning);
+        }
+
+        .note strong, .warn strong {
+            color: #0f172a;
+        }
+
+        /* Use Case Cards */
+        .use-case-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.9rem;
+            margin-bottom: 1.85rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            scroll-margin-top: 2rem;
+        }
+
+        .use-case-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #cbd5e1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.14rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.015em;
+        }
+
+        .tag {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.24rem 0.68rem;
+            border-radius: 6px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+        }
+
+        .tag.green {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+
+        .tag.amber {
+            background: #fffbeb;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+
+        /* Code Blocks */
+        .code-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin: 1.1rem 0 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .code-wrapper {
+            position: relative;
+            margin-top: 0.55rem;
+            margin-bottom: 0.85rem;
+        }
+
+        pre {
+            background-color: var(--bg-code);
+            color: #f1f5f9;
+            padding: 1.25rem 1.35rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+            font-size: 0.83rem;
+            line-height: 1.62;
+            border: 1px solid #1e293b;
+        }
+
+        pre.output-block {
+            background-color: var(--bg-output);
+            color: #cbd5e1;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            background: rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 6px;
+            padding: 0.26rem 0.65rem;
+            font-family: "Inter", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        /* Interactive Playground */
+        .playground {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.9rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .pg-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-top: 0.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 360px;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+            font-size: 0.81rem;
+            line-height: 1.55;
+            padding: 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--radius-md);
+            background: #f8fafc;
+            color: #0f172a;
+            resize: vertical;
+            margin-top: 0.35rem;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        #projector-output {
+            background: var(--bg-code);
+            color: #f8fafc;
+            border-color: #1e293b;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.65rem;
+            margin-top: 1.15rem;
+            flex-wrap: wrap;
+        }
+
+        button.action {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            padding: 0.62rem 1.15rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        button.action:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        button.action.secondary {
+            background: #1e293b;
+        }
+
+        button.action.secondary:hover {
+            background: #0f172a;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 4rem;
+            padding-top: 1.75rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.35rem;
+            align-items: center;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 960px) {
+            aside {
+                width: var(--sidebar-collapsed);
+                padding: 1.5rem 0.6rem;
+            }
+            .brand-title-wrap, .brand-sub, .nav-title, .nav-label, .ext-label {
+                display: none;
+            }
+            .brand-top { justify-content: center; }
+            aside a.nav-link { justify-content: center; padding: 0.6rem 0; }
+            .ext-link { justify-content: center; padding: 0.55rem 0; }
+            main {
+                margin-left: var(--sidebar-collapsed);
+                max-width: calc(100% - var(--sidebar-collapsed));
+                padding: 1.75rem;
+            }
+            .pg-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
-<body class="bg-[#000000] text-[#FFFFFF] antialiased selection:bg-[#FFFFFF] selection:text-[#000000]">
-
-    <nav class="sticky top-0 z-50 backdrop-blur-md bg-black/70 border-b border-neutral-900 px-6 py-5">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 150" class="h-11 w-auto">
-                    <path d="M 10,10 L 130,10 L 130,80 C 130,115 70,140 70,140 C 70,140 10,115 10,80 Z" fill="#FFFFFF" />
-                    <line x1="5" y1="85" x2="135" y2="85" stroke="#000000" stroke-width="4" />
-                    <path d="M 70,25 L 30,115 L 50,115 L 70,65 L 90,115 L 110,115 Z" fill="#000000" />
-                    <polygon points="56,80 84,80 80,70 60,70" fill="#000000" />
-                </svg>
-                <span class="text-2xl font-bold tracking-tight">gov<span class="font-light text-neutral-400">agent</span></span>
-            </div>
-            <div class="flex items-center space-x-6 text-sm font-medium tracking-tight">
-                <a href="#features" class="text-neutral-400 hover:text-white transition-colors hidden sm:inline-block">Architecture</a>
-                <a href="#installation" class="text-neutral-400 hover:text-white transition-colors hidden sm:inline-block">Get Started</a>
-                <a href="#distribution" class="text-neutral-400 hover:text-white transition-colors hidden sm:inline-block">Registry</a>
-                <a href="#author" class="text-neutral-400 hover:text-white transition-colors">Provenance</a>
-                <a href="https://github.com/thekakodkar/GovAgent" target="_blank" class="bg-white text-black px-4 py-1.5 rounded-full hover:bg-neutral-200 transition-all font-semibold">GitHub</a>
-            </div>
-        </div>
-    </nav>
-
-    <header class="relative overflow-hidden pt-32 pb-24 border-b border-neutral-900">
-        <div class="max-w-5xl mx-auto px-6 text-center">
-            <p class="text-sm font-semibold uppercase tracking-[0.4em] text-neutral-500 mb-4">Enterprise-Grade Orchestration</p>
-            <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-none max-w-4xl mx-auto">
-                Freedom within constraints. Control within autonomy.
-            </h1>
-            <p class="text-xl md:text-2xl text-neutral-400 font-light max-w-3xl mx-auto mb-12 leading-relaxed">
-                GovAgent is the deterministic governance layer built to wrap autonomous AI agent execution loops inside explicit business boundary constraints, policy evaluation patterns, and secure audit trails.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <a href="#installation" class="w-full sm:w-auto bg-white text-black text-base font-semibold px-8 py-3 rounded-full hover:bg-neutral-200 transition-all text-center">
-                    Get Started
-                </a>
-                <a href="https://pypi.org/project/govagent/" target="_blank" class="w-full sm:w-auto border border-neutral-700 hover:border-white text-white text-base font-medium px-8 py-3 rounded-full transition-all text-center">
-                    PyPI Package
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <section id="features" class="py-24 max-w-7xl mx-auto px-6">
-        <div class="text-center mb-20">
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">The Governance Pillars</h2>
-            <p class="text-neutral-400 max-w-xl mx-auto font-light">Bridging the gap between autonomous technical capability and compliance enforcement patterns.</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="p-8 rounded-2xl bg-[#0B0C0E] border border-neutral-900 hover:border-neutral-800 transition-all">
-                <div class="text-xl font-bold tracking-tight mb-3 text-white">Policy Boundaries</div>
-                <p class="text-neutral-400 font-light leading-relaxed">Establish rigid zero-leakage constraints and immutable operating bounds before initialization. Prevent model hallucination from leaking into functional business workflows.</p>
-            </div>
-            <div class="p-8 rounded-2xl bg-[#0B0C0E] border border-neutral-900 hover:border-neutral-800 transition-all">
-                <div class="text-xl font-bold tracking-tight mb-3 text-white">Deterministic Evaluation</div>
-                <p class="text-neutral-400 font-light leading-relaxed">Replace probabilistic uncertainty with deterministic programmatic checks. Ensure agent responses pass operational risk assessments dynamically at run-time.</p>
-            </div>
-            <div class="p-8 rounded-2xl bg-[#0B0C0E] border border-neutral-900 hover:border-neutral-800 transition-all">
-                <div class="text-xl font-bold tracking-tight mb-3 text-white">Absolute Transparency</div>
-                <p class="text-neutral-400 font-light leading-relaxed">Built for the boardroom. Generate immutable execution trails, logging input-output evaluation loops to satisfy risk management requirements and audit parameters.</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="installation" class="py-24 bg-[#050607] border-t border-b border-neutral-900">
-        <div class="max-w-5xl mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-center mb-16">Implementation Matrix</h2>
-            
-            <div class="bg-black border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl">
-                <div class="flex items-center space-x-2 px-4 py-3 border-b border-neutral-900 bg-neutral-950/50">
-                    <div class="w-3 h-3 rounded-full bg-neutral-800"></div>
-                    <div class="w-3 h-3 rounded-full bg-neutral-800"></div>
-                    <div class="w-3 h-3 rounded-full bg-neutral-800"></div>
-                    <span class="text-xs text-neutral-500 font-mono pl-4">pip install govagent</span>
+<body>
+<aside id="sidebar">
+    <div>
+        <div class="brand-box">
+            <div class="brand-top">
+                <div class="brand-title-wrap">
+                    <span class="brand">govAgent</span>
+                    <span class="badge-version">v3.1.0</span>
                 </div>
-                <div class="p-6 font-mono text-sm leading-relaxed overflow-x-auto text-neutral-300">
-                    <p class="text-neutral-500"># Install the core governance control plane</p>
-                    <p class="mb-4"><span class="text-neutral-400">$</span> pip install govagent</p>
-                    <p><span class="text-purple-400">import</span> asyncio</p>
-                    <p><span class="text-purple-400">from</span> govagent <span class="text-purple-400">import</span> ExecutiveAgent, tool</p>
-                    <p><span class="text-purple-400">from</span> govagent.policy <span class="text-purple-400">import</span> Policy</p>
-                    <br>
-                    <p><span class="text-purple-400">@tool</span>(name=<span class="text-green-400">"execute_supply_update"</span>, risk_level=<span class="text-green-400">"high"</span>)</p>
-                    <p><span class="text-purple-400">async def</span> update_matrix(matrix_id: <span class="text-amber-400">str</span>):</p>
-                    <p class="pl-4"><span class="text-purple-400">return</span> <span class="text-green-400">f"SUCCESS: {matrix_id}"</span></p>
-                    <br>
-                    <p><span class="text-purple-400">async def</span> main():</p>
-                    <p class="pl-4">agent = ExecutiveAgent(</p>
-                    <p class="pl-8">persona=<span class="text-green-400">"Director"</span>,</p>
-                    <p class="pl-8">policy=Policy.from_yaml(<span class="text-green-400">"policies/finance_policy.yaml"</span>),</p>
-                    <p class="pl-8">router=router</p>
-                    <p class="pl-4">)</p>
-                    <p class="pl-4">result = <span class="text-purple-400">await</span> agent.execute(<span class="text-green-400">"Execute autonomous supply chain matrix update"</span>)</p>
-                    <br>
-                    <p><span class="text-purple-400">if</span> __name__ == <span class="text-green-400">"__main__"</span>:</p>
-                    <p class="pl-4">asyncio.run(main())</p>
+                <button class="toggle-btn" id="sidebarToggle" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+            </div>
+            <div class="brand-sub">Governance - first library for agent execution, policy, and audit</div>
+        </div>
+        <div class="nav-group">
+            <div class="nav-title">Getting Started</div>
+            <ul>
+                <li><a class="nav-link active" href="#overview" title="Overview &amp; Decision"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span class="nav-label">Overview &amp; Decision</span></a></li>
+                <li><a class="nav-link" href="#installation" title="Installation"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><span class="nav-label">Installation &amp; Setup</span></a></li>
+                <li><a class="nav-link" href="#core-concepts" title="Core Concepts"><svg class="nav-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span class="nav-label">Core Concepts</span></a></li>
+            </ul>
+        </div>
+        <div class="nav-group">
+            <div class="nav-title">Use Cases</div>
+            <ul>
+                <li><a class="nav-link" href="#uc-policy" title="1. Load a policy"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span class="nav-label">1. Load a YAML policy</span></a></li>
+                <li><a class="nav-link" href="#uc-tools" title="2. Legislate tools"><svg class="nav-icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg><span class="nav-label">2. Legislate tools</span></a></li>
+                <li><a class="nav-link" href="#uc-execute" title="3. Execute a task"><svg class="nav-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span class="nav-label">3. Execute a task</span></a></li>
+                <li><a class="nav-link" href="#uc-fiscal" title="4. Fiscal gate"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 7V5a4 4 0 0 0-8 0v2"></path></svg><span class="nav-label">4. Fiscal circuit breaker</span></a></li>
+                <li><a class="nav-link" href="#uc-privacy" title="5. Privacy redaction"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg><span class="nav-label">5. Privacy redaction</span></a></li>
+                <li><a class="nav-link" href="#uc-harbor" title="6. Harbor verification"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg><span class="nav-label">6. Harbor verification</span></a></li>
+                <li><a class="nav-link" href="#uc-router" title="7. LLM router"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span class="nav-label">7. Policy-based router</span></a></li>
+                <li><a class="nav-link" href="#uc-governance" title="8. Evidence and CFO"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 3v18h18"></path><path d="M7 16l4-8 4 4 4-6"></path></svg><span class="nav-label">8. Evidence, CFO, Meta</span></a></li>
+            </ul>
+        </div>
+        <div class="nav-group">
+            <div class="nav-title">Reference</div>
+            <ul>
+                <li><a class="nav-link" href="#api-reference" title="API Reference"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span class="nav-label">Method Reference</span></a></li>
+                <li><a class="nav-link" href="#errors" title="Errors"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span class="nav-label">Errors &amp; Behavior Notes</span></a></li>
+                <li><a class="nav-link" href="#simulator" title="Policy projector"><svg class="nav-icon" viewBox="0 0 24 24"><polyline points="4 17 10 11 14 15 20 9"></polyline></svg><span class="nav-label">Policy Projector</span></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="sidebar-links">
+        <a class="ext-link" href="https://github.com/thekakodkar/GovAgent" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.73.5 12.02c0 5.1 3.29 9.43 7.86 10.96.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.74.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.58.24 2.75.12 3.04.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.81-.01 3.19 0 .31.21.68.8.56A10.53 10.53 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"></path></svg>
+            <span class="ext-label">GitHub Repository</span>
+        </a>
+        <a class="ext-link" href="https://pypi.org/project/govagent/" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"></path></svg>
+            <span class="ext-label">PyPI Package</span>
+        </a>
+    </div>
+</aside>
+
+<main>
+    <div class="content-container">
+        <header class="hero">
+            <span class="hero-eyebrow">Enterprise AI Governance SDK</span>
+            <h1>govAgent v3.1.0 - Library Documentation</h1>
+            <p>govAgent is a Python library that wraps an LLM call in declarative policy enforcement, privacy redaction, tool-schema validation, a fiscal circuit breaker, and cryptographic execution snapshots. This guide documents the public package <code class="inline">govagent</code> as verified against current <code class="inline">main</code> (<code class="inline">b13bbd7</code>).</p>
+            <div class="hero-actions">
+                <a class="hero-btn primary" href="https://pypi.org/project/govagent/" target="_blank" rel="noopener noreferrer">Install from PyPI</a>
+                <a class="hero-btn" href="https://github.com/thekakodkar/GovAgent" target="_blank" rel="noopener noreferrer">View Source on GitHub</a>
+                <a class="hero-btn" href="https://www.linkedin.com/in/thekakodkar/" target="_blank" rel="noopener noreferrer">Author: Niraj Kakodkar</a>
+            </div>
+            <div class="pill-row">
+                <span class="pill">Python &gt;=3.10,&lt;3.14</span>
+                <span class="pill">PyPI: govagent 3.1.0</span>
+                <span class="pill">MIT License</span>
+                <span class="pill">Extras: crewai, langchain, enterprise</span>
+            </div>
+        </header>
+
+        <section id="overview">
+            <h2>Which API Should I Use?</h2>
+            <p>Start from the core primitives exported by <code class="inline">from govagent import ...</code>. Specialized governance engines and adapters are imported directly from their respective submodules.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Use Case</th><th>Entry Point</th><th>Returns</th><th>Implementation Behavior</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Load a YAML or dict policy</strong></td>
+                            <td><code class="inline">Policy.from_yaml(path)</code> or <code class="inline">Policy(config)</code></td>
+                            <td><code class="inline">Policy</code></td>
+                            <td>Projects nested <code class="inline">fiscal_governance.global_limits</code> and <code class="inline">alignment</code>. The allow-list is the top-level <code class="inline">tools:</code> list, not <code class="inline">registry_alignment</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Register a tool</strong></td>
+                            <td><code class="inline">@tool(name=..., risk_level=..., ...)</code></td>
+                            <td>Original callable</td>
+                            <td>Registers on the process-wide <code class="inline">registry</code> singleton. <code class="inline">ExecutiveAgent.perform_action</code> does not invoke this function directly.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Run a governed task</strong></td>
+                            <td><code class="inline">await agent.execute(task)</code></td>
+                            <td><code class="inline">ExecutionSnapshot</code></td>
+                            <td>Redacts prompt, invokes <code class="inline">router.route_and_generate</code>, and validates tool intent. <code class="inline">router=None</code> returns sandbox success without an LLM.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enforce fiscal ceilings</strong></td>
+                            <td><code class="inline">CircuitBreaker.check_financial_risk(cost)</code></td>
+                            <td><code class="inline">None</code> or raises <code class="inline">GovernanceViolation</code></td>
+                            <td>Compares cumulative swarm spend plus projected cost against <code class="inline">min(recursive_tco_ceiling, daily_budget_usd)</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redact PII in strings</strong></td>
+                            <td><code class="inline">PrivacyGuard(policy).redact_task(text)</code></td>
+                            <td><code class="inline">str</code></td>
+                            <td>Uses Microsoft Presidio plus a custom street-address regex. Requires <code class="inline">en_core_web_lg</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Score semantic alignment</strong></td>
+                            <td><code class="inline">SemanticGuard(...).evaluate_alignment(text)</code></td>
+                            <td><code class="inline">float</code></td>
+                            <td>Returns <code class="inline">0.0</code> on a breach, otherwise <code class="inline">1.0 - max_similarity</code>. Not called inside <code class="inline">CircuitBreaker.evaluate</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Route an LLM request</strong></td>
+                            <td><code class="inline">PolicyBasedRouter.route_and_generate</code></td>
+                            <td><code class="inline">LLMResponse</code></td>
+                            <td><code class="inline">LOCAL_ONLY</code> and <code class="inline">CLOUD_ONLY</code> always route to <code class="inline">default_provider</code>. Conditional rules execute only in <code class="inline">HYBRID</code> mode.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Verify a Harbor artifact</strong></td>
+                            <td><code class="inline">registry.verify_and_resolve_tool(name)</code></td>
+                            <td>Callable or raises</td>
+                            <td>Not invoked automatically by <code class="inline">execute()</code>. Default token uses the offline <code class="inline">mock-token</code> stub.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Generate audit &amp; CFO packs</strong></td>
+                            <td><code class="inline">EvidencePackGenerator</code>, <code class="inline">CFOAnalyticsEngine</code>, <code class="inline">MetaGovernor</code></td>
+                            <td>Models / dicts</td>
+                            <td>Exported directly from <code class="inline">govagent.governance</code>.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="installation">
+            <h2>Installation &amp; Setup</h2>
+            <div class="use-case-card">
+                <div class="card-header">
+                    <span class="card-title">PyPI Package and Optional Extras</span>
+                    <span class="tag green">pyproject.toml 3.1.0</span>
+                </div>
+                <p><code class="inline">pyproject.toml</code> targets Python <code class="inline">&gt;=3.10,&lt;3.14</code>. The published distribution packages the core <code class="inline">govagent</code> library under <code class="inline">src/</code>.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre># Core library (includes Presidio, spaCy, Slack, AWS, Azure, and OpenTelemetry dependencies)
+pip install govagent==3.1.0
+
+# Optional extras declared in pyproject.toml
+pip install "govagent[enterprise]"   # sentence-transformers (required to instantiate ExecutiveAgent)
+pip install "govagent[crewai]"       # CrewAI governance adapter
+pip install "govagent[langchain]"    # langchain-core, langchain-openai, openai
+
+# Presidio's AnalyzerEngine (used by PrivacyGuard) requires the large English spaCy model
+python -m spacy download en_core_web_lg
+
+# Local repository development
+poetry install --with dev --extras "crewai enterprise"
+python -m spacy download en_core_web_lg</pre>
+                </div>
+                <div class="warn">
+                    <strong>Runtime Dependency Note:</strong> <code class="inline">ExecutiveAgent</code> always instantiates <code class="inline">SemanticGuard</code> upon initialization, which requires the <code class="inline">enterprise</code> extra (<code class="inline">sentence-transformers</code>) and loads <code class="inline">all-MiniLM-L6-v2</code>. A base <code class="inline">pip install govagent</code> allows importing <code class="inline">Policy</code> and <code class="inline">registry</code>, but constructing <code class="inline">ExecutiveAgent</code> will raise an <code class="inline">ImportError</code> until <code class="inline">sentence-transformers</code> is installed.
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="distribution" class="py-20 bg-[#000000] border-b border-neutral-900">
-        <div class="max-w-5xl mx-auto px-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h2 class="text-3xl font-bold tracking-tight mb-6">Package Distribution</h2>
-                    <p class="text-neutral-400 font-light leading-relaxed mb-6">
-                        GovAgent is actively maintained and distributed via the Python Package Index (PyPI). Designed for zero external dependency bloat, it drops directly into enterprise AI stacks to orchestrate local inference models and sovereign deployments.
-                    </p>
-                    <div class="flex space-x-8 border-t border-neutral-900 pt-6">
-                        <div>
-                            <div class="text-2xl font-bold tracking-tight text-white">v3.0.3</div>
-                            <div class="text-xs uppercase tracking-widest text-neutral-500 mt-1">Stable Release</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold tracking-tight text-white">Zero</div>
-                            <div class="text-xs uppercase tracking-widest text-neutral-500 mt-1">Data-Leakage Bounds</div>
-                        </div>
+        <section id="core-concepts">
+            <h2>Core Concepts</h2>
+            <h3>Policy Projection Mechanics</h3>
+            <p><code class="inline">Policy</code> retains the raw YAML dictionary in <code class="inline">policy.config</code> and projects normalized attributes for runtime enforcement:</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>YAML Key</th><th>Projected Attribute</th><th>Runtime Behavior</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code class="inline">metadata</code></td><td><code class="inline">metadata</code>, <code class="inline">agent_name</code></td><td>Defaults <code class="inline">agent_name</code> to <code class="inline">UnknownAgent</code> if omitted.</td></tr>
+                        <tr><td><code class="inline">tools</code> (list of dicts with <code class="inline">name</code>)</td><td><code class="inline">tool_rules</code>, <code class="inline">allowed_tools</code></td><td>Defines the active allow-list. On initialization, <code class="inline">validate_registry()</code> raises <code class="inline">PermissionError</code> if any registered tool is absent from a non-empty list, or if a tool's decorator <code class="inline">risk_level</code> is lower than the YAML specification.</td></tr>
+                        <tr><td><code class="inline">infrastructure.routing_mode</code> / <code class="inline">default_provider</code> / <code class="inline">rules</code></td><td><code class="inline">routing_mode</code>, <code class="inline">default_provider</code>, <code class="inline">routing_rules</code></td><td>Defaults to <code class="inline">LOCAL_ONLY</code> and <code class="inline">local_ollama</code>.</td></tr>
+                        <tr><td><code class="inline">fiscal_governance.global_limits</code> and/or top-level <code class="inline">global_limits</code></td><td><code class="inline">global_limits</code></td><td>Top-level keys take precedence over nested keys. Nested <code class="inline">recursive_tco_limit</code> is normalized to <code class="inline">recursive_tco_ceiling</code>. If no top-level block is defined, defaults inject <code class="inline">daily_budget_usd: 10.0</code>.</td></tr>
+                        <tr><td><code class="inline">alignment</code></td><td><code class="inline">alignment</code></td><td>Forwarded to <code class="inline">SemanticGuard</code> as <code class="inline">mission_statement</code>, <code class="inline">prohibited_strategies</code>, and <code class="inline">min_similarity_score</code> (default <code class="inline">0.85</code>).</td></tr>
+                        <tr><td><code class="inline">judiciary</code> (top-level)</td><td><code class="inline">judiciary_settings</code></td><td>Defaults to Slack, confidence <code class="inline">0.9</code>, timeout <code class="inline">300</code>s. Note: sample YAMLs place judiciary under <code class="inline">oversight.judiciary</code>, which is not projected onto an <code class="inline">oversight</code> attribute.</td></tr>
+                        <tr><td><code class="inline">registry_alignment.*</code></td><td>Not projected</td><td>Present in sample YAML templates, but ignored by <code class="inline">Policy</code>. <code class="inline">is_high_risk()</code> evaluates only top-level <code class="inline">tools:</code> entries for <code class="inline">require_human_approval</code> or <code class="inline">risk_level == "high"</code>.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>The Execution Lifecycle</h3>
+            <p><code class="inline">ExecutiveAgent.execute(task)</code> runs an asynchronous control loop capped at 10 iterations:</p>
+            <ol class="flow-list">
+                <li><strong>Context &amp; Privacy:</strong> Binds the active agent on a <code class="inline">contextvar</code> and redacts PII from the input prompt via <code class="inline">PrivacyGuard.redact_task</code>.</li>
+                <li><strong>Telemetry &amp; Sandbox Check:</strong> Starts a telemetry trace. If <code class="inline">router is None</code>, returns immediately with status <code class="inline">success</code> and output <code class="inline">Task complete (Test Sandbox Mode).</code></li>
+                <li><strong>LLM Inference:</strong> Constructs an <code class="inline">LLMRequest</code> (temperature <code class="inline">0.0</code>, system instruction <code class="inline">You are a {persona}. Corporate Policy Boundaries apply.</code>) and invokes <code class="inline">router.route_and_generate</code>.</li>
+                <li><strong>Completion Check:</strong> If the response contains no tool calls, or the action is <code class="inline">complete</code> (including the substring “complete” in response text), terminates with <code class="inline">Task complete.</code></li>
+                <li><strong>Schema Validation:</strong> Executes <code class="inline">registry.validate_intent_schema</code>. Invalid monetary values, schema violations, or unregistered tools terminate the run as <code class="inline">blocked</code> (not <code class="inline">error</code>).</li>
+                <li><strong>Fiscal &amp; Judiciary Guards:</strong> Calls <code class="inline">evaluate(guards=["fiscal", "judiciary"], ...)</code>. Fiscal evaluation checks the tool's <code class="inline">amount</code> plus cumulative session spend. Judiciary approval triggers only when <code class="inline">policy.is_high_risk(action)</code> evaluates to <code class="inline">True</code>.</li>
+                <li><strong>Action Dispatch:</strong> <code class="inline">perform_action</code> returns <code class="inline">Action {name} executed with params {params}</code> without executing the underlying Python callable. If the action name is <code class="inline">execute_financial_transaction</code>, the loop exits immediately after that step.</li>
+                <li><strong>Terminal States:</strong> Any <code class="inline">GovernanceViolation</code> maps to <code class="inline">blocked</code>; unhandled exceptions map to <code class="inline">error</code>; exceeding 10 steps maps to <code class="inline">timeout</code>.</li>
+            </ol>
+            <div class="note">
+                <strong>Scope of Execution Loop:</strong> <code class="inline">CircuitBreaker.evaluate</code> checks financial risk exclusively. <code class="inline">SemanticGuard.evaluate_alignment</code> and Harbor artifact verification (<code class="inline">registry.verify_and_resolve_tool</code>) are standalone primitives and are not called automatically inside <code class="inline">ExecutiveAgent.execute</code>.
+            </div>
+        </section>
+
+        <section id="use-cases">
+            <h2>Core Use Cases</h2>
+            <p>All examples below are verified against <code class="inline">src/govagent</code>. Dynamic identifiers such as trace IDs, export IDs, and SHA-256 seals vary per execution.</p>
+
+            <div class="use-case-card" id="uc-policy">
+                <div class="card-header">
+                    <span class="card-title">Use Case 1: Load a YAML Policy &amp; Inspect Projected Limits</span>
+                    <span class="tag">Policy.from_yaml</span>
+                </div>
+                <p>Loading <code class="inline">policies/finance_policy.yaml</code> demonstrates how nested fiscal limits are normalized. Because this sample uses <code class="inline">registry_alignment</code> rather than a top-level <code class="inline">tools:</code> array, <code class="inline">allowed_tools</code> projects as empty, while omitted keys (<code class="inline">max_per_transaction</code>, <code class="inline">max_tokens_per_run</code>) inherit default values.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.policy import Policy
+
+policy = Policy.from_yaml("policies/finance_policy.yaml")
+print(policy.agent_name)
+print(policy.routing_mode, policy.default_provider)
+print(policy.global_limits)
+print(policy.allowed_tools)
+print(policy.is_high_risk("execute_financial_transaction"))
+print(hasattr(policy, "oversight"))</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">📋 Compliance Audit: Aligning code with 'Healthcare Finance Director' policy...
+✅ Governance Alignment: Registry and Policy are synchronized.
+Healthcare Finance Director
+HYBRID local_ollama
+{'daily_budget_usd': 100.0, 'max_per_transaction': 2000.0, 'max_tokens_per_run': 4000, 'transaction_ceiling': 2000.0, 'recursive_tco_ceiling': 500.0}
+[]
+False
+False</pre>
+                </div>
+                <p>A policy omitting fiscal configuration defaults to a <code class="inline">10.0</code> USD daily budget. Providing a top-level <code class="inline">global_limits</code> block overrides explicit keys without injecting unselected defaults:</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>Policy({"metadata": {"agent_name": "Plain"}}).global_limits
+# {'daily_budget_usd': 10.0, 'max_per_transaction': 2000.0, 'max_tokens_per_run': 4000}
+
+Policy({
+    "metadata": {"agent_name": "Override"},
+    "global_limits": {"daily_budget_usd": 7},
+    "fiscal_governance": {"global_limits": {"daily_budget_usd": 100, "recursive_tco_limit": 40}},
+}).global_limits
+# {'daily_budget_usd': 7, 'recursive_tco_ceiling': 40}</pre>
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-tools">
+                <div class="card-header">
+                    <span class="card-title">Use Case 2: Legislate Tools &amp; Validate Intents</span>
+                    <span class="tag green">@tool + registry</span>
+                </div>
+                <p>Import <code class="inline">tool</code> and <code class="inline">registry</code> from the top-level package. The decorator accepts <code class="inline">name</code>, <code class="inline">description</code>, <code class="inline">risk_level</code> (default <code class="inline">"low"</code>), <code class="inline">oci_repository</code>, <code class="inline">artifact_digest</code>, and <code class="inline">schema</code>. Tools named <code class="inline">execute_financial_transaction</code> automatically validate against <code class="inline">FinancialTransactionIntent</code> (<code class="inline">amount</code> required, extra fields forbidden) unless overridden.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent import tool, registry, Policy
+
+@tool(name="execute_financial_transaction", risk_level="high")
+def execute_financial_transaction(amount: float):
+    return amount
+
+policy = Policy({
+    "metadata": {"agent_name": "Treasury"},
+    "tools": [
+        {"name": "execute_financial_transaction", "risk_level": "high", "require_human_approval": True}
+    ],
+})
+print(policy.allowed_tools)
+print(policy.is_high_risk("execute_financial_transaction"))
+print(registry.validate_intent_schema("execute_financial_transaction", {"amount": 10}))
+print(registry.validate_intent_schema("not_a_published_tool", {}))</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">📋 Compliance Audit: Aligning code with 'Treasury' policy...
+✅ Governance Alignment: Registry and Policy are synchronized.
+['execute_financial_transaction']
+True
+{'valid': True, 'status': 'AUTHORIZED'}
+{'valid': False, 'error': 'Tool not legislated'}</pre>
+                </div>
+                <p>Common boundary and schema exceptions raised during initialization or validation:</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block"># Registered tool missing from a non-empty tools: list
+PermissionError: 🛑 UNAUTHORIZED TOOL DETECTED: 'unauthorized_shell' violates policy boundary.
+
+# YAML risk_level is higher than the @tool risk_level
+PermissionError: 🛑 GOVERNANCE VIOLATION: Risk downgrade detected for 'pay_vendor'.
+
+# Non-numeric amount on the financial schema
+ValidationError: Invalid monetary value: 'invalid_amt' is not a valid float.
+
+# Non-numeric amount on an unregistered tool containing an 'amount' key
+ValueError: Institutional Integrity Failure: 'amount' must be numeric.</pre>
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-execute">
+                <div class="card-header">
+                    <span class="card-title">Use Case 3: Execute a Governed Task</span>
+                    <span class="tag amber">ExecutiveAgent.execute</span>
+                </div>
+                <p>Use <code class="inline">ExecutiveAgent.bootstrap(policy_path, router_client, slack_channel=None)</code> to load a YAML policy and initialize optional Slack HITL integration, or instantiate <code class="inline">ExecutiveAgent</code> directly. <code class="inline">OllamaClient</code> resides in <code class="inline">govagent.llm.ollama</code>.</p>
+                <h3>Sandbox Mode (<code class="inline">router=None</code>)</h3>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>import asyncio
+from govagent.agent import ExecutiveAgent
+from govagent.policy import Policy
+
+policy = Policy({"metadata": {"agent_name": "SandboxDirector"}})
+agent = ExecutiveAgent(persona="Director", policy=policy, router=None)
+result = asyncio.run(agent.execute("Approve an urgent transaction of $8,500 to buy compute nodes."))
+print(result.status, result.output)
+print(result.metrics)</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">success Task complete (Test Sandbox Mode).
+{'fiscal_impact': 0.0, 'total_tokens': 0, 'recursive_tco_usd': 0.0, 'selected_model': 'mock_sandbox'}</pre>
+                </div>
+                <p>The return value is a <code class="inline">govagent.registry.schemas.ExecutionSnapshot</code>. Runtime telemetry metrics are populated inside <code class="inline">result.metrics</code>.</p>
+                <h3>Custom Router Integration</h3>
+                <p>Any router implementing an async <code class="inline">route_and_generate(request, context) -&gt; LLMResponse</code> method can drive execution. Setting <code class="inline">risk_level="low"</code> avoids triggering the blocking CLI HITL prompt during automated testing:</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent import tool, Policy
+from govagent.agent import ExecutiveAgent
+from govagent.llm.base import LLMResponse
+
+@tool(name="execute_financial_transaction", risk_level="low")
+def _payment(amount: float):
+    return f"PAID {amount}"
+
+class GoodRouter:
+    async def route_and_generate(self, request, context):
+        return LLMResponse(
+            text="I will execute the payment now.",
+            tool_calls=[{"name": "execute_financial_transaction", "args": {"amount": 10}}],
+            raw_usage={"total_tokens": 4},
+            model_name="scripted",
+        )
+
+policy = Policy({
+    "metadata": {"agent_name": "Treasury"},
+    "fiscal_governance": {"global_limits": {"daily_budget_usd": 100.0, "recursive_tco_limit": 150.0}},
+})
+agent = ExecutiveAgent(persona="Director", policy=policy, router=GoodRouter())
+result = await agent.execute("Pay an invoice")</pre>
+                </div>
+                <div class="code-label">Observed Snapshot Outcomes</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block"># Valid tool execution
+status: success
+output: Action execute_financial_transaction executed with params {'amount': 10}
+metrics: {'fiscal_impact': 10, 'total_tokens': 4, 'recursive_tco_usd': 0.0, 'selected_model': 'local_ollama'}
+
+# Invalid monetary argument — mapped to blocked status
+status: blocked
+output: Schema Violation: 1 validation error for FinancialTransactionIntent
+amount
+  Value error, Invalid monetary value: 'invalid_amt' is not a valid float.
+
+# Unregistered tool call
+status: blocked
+output: Schema Violation: Tool not legislated
+
+# Text response containing "complete" with no tool_calls
+status: success
+output: Task complete.</pre>
+                </div>
+                <div class="warn">
+                    <strong>Implementation Quirks:</strong> (1) <code class="inline">LLMResponse.raw_usage</code> is strictly typed as <code class="inline">Dict[str, int]</code>; passing float values (e.g., <code class="inline">estimated_cost_usd: 0.01</code>) causes Pydantic validation to fail and sets execution status to <code class="inline">error</code>. (2) <code class="inline">metrics["selected_model"]</code> inspects <code class="inline">response.selected_model</code> before falling back to <code class="inline">default_provider</code> when <code class="inline">local_ollama</code> is configured.
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-fiscal">
+                <div class="card-header">
+                    <span class="card-title">Use Case 4: Fiscal Circuit Breaker</span>
+                    <span class="tag">CircuitBreaker</span>
+                </div>
+                <p><code class="inline">CircuitBreaker</code> sums the thread-isolated swarm spend ledger with the projected transaction cost and enforces <code class="inline">min(recursive_tco_ceiling, daily_budget_usd)</code> (evaluating to <code class="inline">min(500, 100) = 100</code> for the sample finance policy). If both keys are omitted, defaults are ceiling <code class="inline">150.0</code> and daily budget <code class="inline">100.0</code>.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.policy import Policy
+from govagent.guards.circuit_breaker import CircuitBreaker, GovernanceViolation
+from govagent.context import reset_fiscal_ledger, update_shared_spend, get_shared_fiscal_metrics
+
+policy = Policy.from_yaml("policies/finance_policy.yaml")
+reset_fiscal_ledger()
+breaker = CircuitBreaker(policy, semantic_guard=None)
+
+breaker.check_financial_risk(90.0)          # Allowed (90.0 <= 100.0)
+try:
+    breaker.check_financial_risk(150.0)     # Blocked (150.0 > 100.0)
+except GovernanceViolation as exc:
+    print(exc)
+
+update_shared_spend(80.0)
+print(get_shared_fiscal_metrics())
+try:
+    breaker.check_financial_risk(30.0)      # Blocked (80.0 + 30.0 = 110.0 > 100.0)
+except GovernanceViolation as exc:
+    print(exc)</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">RECURSIVE TCO REJECT: Projected swarm spend $150.00 exceeds the institutional limit of $100.00.
+{'cumulative_spend': 80.0, 'task_counter': 1.0}
+RECURSIVE TCO REJECT: Projected swarm spend $110.00 exceeds the institutional limit of $100.00.</pre>
+                </div>
+                <p>When breached during <code class="inline">ExecutiveAgent.execute</code> (e.g., <code class="inline">amount=200</code> against a <code class="inline">100</code> limit), the run halts cleanly:</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">status: blocked
+output: RECURSIVE TCO REJECT: Projected swarm spend $200.00 exceeds the institutional limit of $100.00.
+metrics: {'fiscal_impact': 0.0, 'total_tokens': 8, 'recursive_tco_usd': 0.0, 'selected_model': 'local_ollama'}</pre>
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-privacy">
+                <div class="card-header">
+                    <span class="card-title">Use Case 5: Privacy Redaction</span>
+                    <span class="tag green">PrivacyGuard</span>
+                </div>
+                <p><code class="inline">PrivacyGuard.redact_task</code> runs Microsoft Presidio across <code class="inline">PERSON</code>, <code class="inline">LOCATION</code>, <code class="inline">PHONE_NUMBER</code>, and <code class="inline">EMAIL_ADDRESS</code> entities alongside a custom street-address recognizer. <code class="inline">ExecutiveAgent.execute</code> sanitizes the user prompt prior to LLM dispatch.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.policy import Policy
+from govagent.guards.privacy import PrivacyGuard
+
+guard = PrivacyGuard(Policy({"metadata": {"agent_name": "PrivacyDemo"}}))
+print(guard.redact_task("Pay John Doe at 123 Main St for invoice #99."))</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">Pay &lt;PERSON&gt; at &lt;LOCATION&gt; for invoice #99.</pre>
+                </div>
+                <div class="note">
+                    <strong>Routing Context Note:</strong> While <code class="inline">ExecutiveAgent.execute</code> sanitizes the prompt string before routing, <code class="inline">PrivacyGuard</code> does not mutate <code class="inline">last_execution_had_pii</code>, meaning <code class="inline">contains_pii</code> remains <code class="inline">False</code> in router metadata unless populated explicitly by the caller.
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-harbor">
+                <div class="card-header">
+                    <span class="card-title">Use Case 6: Harbor OCI Artifact Verification</span>
+                    <span class="tag">HarborVerifier</span>
+                </div>
+                <p><code class="inline">HarborVerifier</code> queries Harbor v2 APIs when configured with a live robot token (<code class="inline">HARBOR_ROBOT_TOKEN</code>). Tokens matching <code class="inline">"mock-token"</code>, <code class="inline">"mock"</code>, or starting with <code class="inline">"mock-"</code> operate in offline stub mode, rejecting repositories containing <code class="inline">malicious</code> and passing all others. <code class="inline">registry.verify_and_resolve_tool</code> triggers verification whenever both <code class="inline">oci_repository</code> and <code class="inline">artifact_digest</code> are declared on <code class="inline">@tool</code>.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.registry.harbor_verifier import HarborVerifier
+from govagent import tool, registry
+
+h = HarborVerifier(robot_token="mock-token")
+print(h.verify_tool_artifact("bizzteq/finance-utils", "sha256:abc"))
+print(h.verify_tool_artifact("malicious/wipe", "sha256:abc"))
+
+@tool(name="database_wipe", risk_level="high",
+      oci_repository="malicious/db", artifact_digest="sha256:dead")
+def database_wipe():
+    return "wiped"
+
+registry.verify_and_resolve_tool("database_wipe")</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">{'verified': True, 'reason': 'COSIGN_SIGNATURE_VALIDATED', 'details': 'Offline mock-token stub. This result is not a Harbor verdict.'}
+{'verified': False, 'reason': 'CRITICAL_VULNERABILITY_FOUND', 'details': 'Scan discovered CVE-2026-9999 (High Severity Risk Level).'}
+GovernanceViolation: HARBOR REGISTRY BLOCK: Tool failed image validation. Details: Scan discovered CVE-2026-9999 (High Severity Risk Level).
+
+# Unregistered tool resolution
+GovernanceViolation: REGISTRY EXCEPTION: Tool 'unregistered_arbitrary_shell_script' is not authorized.</pre>
+                </div>
+                <p>With a live robot token, <code class="inline">HarborVerifier</code> fails closed: unreachable registries, non-200 HTTP responses, missing vulnerability scans, missing Cosign signatures, or High/Critical CVEs all return <code class="inline">verified: False</code>.</p>
+            </div>
+
+            <div class="use-case-card" id="uc-router">
+                <div class="card-header">
+                    <span class="card-title">Use Case 7: Policy-Based LLM Router</span>
+                    <span class="tag">PolicyBasedRouter</span>
+                </div>
+                <p><code class="inline">RoutingMode</code> supports <code class="inline">LOCAL_ONLY</code>, <code class="inline">CLOUD_ONLY</code>, and <code class="inline">HYBRID</code>. Initialization raises a <code class="inline">ValueError</code> if <code class="inline">default_provider</code> is absent from the <code class="inline">clients</code> dictionary. Conditional <code class="inline">RoutingRule</code> evaluation executes only in <code class="inline">HYBRID</code> mode.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.llm.router import PolicyBasedRouter, RouterConfig, RoutingMode, RoutingRule
+from govagent.llm.base import BaseLLMClient, LLMRequest, LLMResponse
+
+class Dummy(BaseLLMClient):
+    async def generate(self, request: LLMRequest) -> LLMResponse:
+        return LLMResponse(text="ok", model_name="dummy", raw_usage={"total_tokens": 1})
+
+clients = {"local_ollama": Dummy({}), "cloud_openai": Dummy({})}
+hybrid = PolicyBasedRouter(clients, RouterConfig(
+    routing_mode=RoutingMode.HYBRID,
+    default_provider="local_ollama",
+    rules=[
+        RoutingRule(condition_key="contains_pii", expected_value=True, target_provider="local_ollama"),
+        RoutingRule(condition_key="tool_complexity", expected_value="high", target_provider="cloud_openai"),
+    ],
+))
+print(hybrid.determine_target({"contains_pii": True}))
+print(hybrid.determine_target({"tool_complexity": "high"}))
+print(hybrid.determine_target({}))</pre>
+                </div>
+                <div class="code-label">Verified Output</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">local_ollama
+cloud_openai
+local_ollama
+
+# LOCAL_ONLY bypasses rules and always selects default_provider
+# HYBRID rules pointing to an unconfigured client log an alert and fall back to default_provider
+# Missing default_provider at construction:
+ValueError: 🛑 GOVERNANCE CRASH: Router misconfiguration. The default provider 'cloud_openai' requested by the policy was not loaded. Available clients: ['local_ollama']</pre>
+                </div>
+            </div>
+
+            <div class="use-case-card" id="uc-governance">
+                <div class="card-header">
+                    <span class="card-title">Use Case 8: Evidence Pack, CFO Analytics &amp; MetaGovernor</span>
+                    <span class="tag green">govagent.governance</span>
+                </div>
+                <p><code class="inline">govagent.governance</code> exports <code class="inline">MetaGovernor</code>, <code class="inline">CFOAnalyticsEngine</code>, <code class="inline">ComplianceDossier</code>, and <code class="inline">EvidencePackGenerator</code> for post-execution audit, financial telemetry, and autonomous policy tuning.</p>
+                <h3>EvidencePackGenerator</h3>
+                <p>Ingests a JSONL audit buffer (defaulting to <code class="inline">logs/audit_buffer.jsonl</code>). <code class="inline">BLOCKED</code> or <code class="inline">VETOED</code> events increment EU AI Act Article 9 counters when <code class="inline">block_reason</code> matches <code class="inline">PII</code>/<code class="inline">PRIVACY</code>, <code class="inline">SEMANTIC</code>, or <code class="inline">HARBOR</code>/<code class="inline">CVE</code>. Calling <code class="inline">seal()</code> computes a deterministic <code class="inline">dossier_sha256</code> digest.</p>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre>from govagent.governance import EvidencePackGenerator
+
+dossier = EvidencePackGenerator(buffer_path="audit.jsonl").generate(system_anchor="govagent-help-demo")
+print(dossier.framework_version, dossier.dossier_sha256)</pre>
+                </div>
+                <h3>CFOAnalyticsEngine</h3>
+                <p><code class="inline">record_execution</code> (aliased as <code class="inline">record_snapshot</code> and <code class="inline">record_transaction</code>) aggregates <code class="inline">recursive_tco_usd</code> and <code class="inline">total_tokens</code> by <code class="inline">cost_center</code> (default <code class="inline">CC-GENAI-DEFAULT</code>, GL <code class="inline">GL-640100-SOFTWARE</code>). <code class="inline">analyze()</code> accumulates <code class="inline">requested_exposure_usd</code> into value-at-risk for exact <code class="inline">BLOCKED</code> or <code class="inline">PENDING</code> statuses and flags <code class="inline">burn_rate_anomaly_detected</code> when spend exceeds <code class="inline">0.50</code>.</p>
+                <h3>MetaGovernor</h3>
+                <p><code class="inline">analyze_friction()</code> inspects a JSONL audit trail (default <code class="inline">logs/audit_trail.jsonl</code>). Entries whose <code class="inline">status</code> contains both <code class="inline">REJECT</code>/<code class="inline">BLOCKED</code> and <code class="inline">TCO</code>/<code class="inline">FISCAL</code> increment the friction counter. Reaching <code class="inline">friction_threshold</code> (default <code class="inline">3</code>) emits a <code class="inline">POLICY_AMENDMENT_PROPOSAL</code> setting <code class="inline">proposed_limit = max(current_limit * 1.20, avg_request * 1.10)</code>:</p>
+                <div class="code-label">Generated Policy Amendment Proposal (Threshold = 3)</div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre class="output-block">{
+  "type": "POLICY_AMENDMENT_PROPOSAL",
+  "version": "1.0.0",
+  "reason": "Systemic blockage intercepted: 3 consecutive TCO budget rejections encountered.",
+  "target_policy": "finance_policy.yaml",
+  "metric_breached": "recursive_tco_usd",
+  "current_limit": 100.0,
+  "proposed_limit": 176.0,
+  "impact_assessment": "Mitigates operational friction across autonomous sub-agent delegation domains, restoring workspace automation liquidity."
+}</pre>
+                </div>
+                <p>Optional framework integrations are also available via submodules: <code class="inline">GovAgentEnforcer(crew, policy_path)</code> in <code class="inline">govagent.extensions.crewai.enforcer</code> and <code class="inline">BobMCPProxyGateway.govern_mcp_tool(name, fn)</code> in <code class="inline">govagent.extensions.ibm.bob_mcp_proxy</code>.</p>
+            </div>
+        </section>
+
+        <section id="api-reference">
+            <h2>Complete API Reference</h2>
+            <p>Top-level exports in <code class="inline">govagent.__all__</code>: <code class="inline">ExecutiveAgent</code>, <code class="inline">Policy</code>, <code class="inline">tool</code>, <code class="inline">registry</code>, <code class="inline">get_current_agent</code>, <code class="inline">BaseLLMClient</code>, <code class="inline">LLMRequest</code>, <code class="inline">LLMResponse</code>, <code class="inline">PolicyBasedRouter</code>, <code class="inline">RouterConfig</code>, <code class="inline">RoutingMode</code>.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Symbol</th><th>Signature</th><th>Behavior</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code class="inline">Policy(config)</code></td><td><code class="inline">Policy(config: dict)</code></td><td>Projects limits, routing, alignment, and tool rules; audits registry on init.</td></tr>
+                        <tr><td><code class="inline">Policy.from_yaml</code></td><td><code class="inline">from_yaml(path: str) -&gt; Policy</code></td><td>Reads UTF-8 YAML via <code class="inline">yaml.safe_load</code>.</td></tr>
+                        <tr><td><code class="inline">Policy.allowed_tools</code></td><td><code class="inline">@property -&gt; list[str]</code></td><td>Tool names declared in the top-level <code class="inline">tools:</code> list.</td></tr>
+                        <tr><td><code class="inline">Policy.get_tool_config</code></td><td><code class="inline">get_tool_config(tool_name) -&gt; dict</code></td><td>Returns rule dict for <code class="inline">tool_name</code>, or <code class="inline">{}</code> if absent.</td></tr>
+                        <tr><td><code class="inline">Policy.is_high_risk</code></td><td><code class="inline">is_high_risk(tool_name) -&gt; bool</code></td><td><code class="inline">True</code> if <code class="inline">require_human_approval</code> is truthy or <code class="inline">risk_level == "high"</code>.</td></tr>
+                        <tr><td><code class="inline">tool</code></td><td><code class="inline">tool(name=None, description=None, risk_level="low", oci_repository=None, artifact_digest=None, schema=None)</code></td><td>Registers callable on <code class="inline">GlobalRegistry</code>. Name defaults to <code class="inline">func.__name__</code>.</td></tr>
+                        <tr><td><code class="inline">registry.validate_intent_schema</code></td><td><code class="inline">validate_intent_schema(tool_name, arguments) -&gt; dict</code></td><td>Returns <code class="inline">{"valid": True, "status": "AUTHORIZED"}</code> or <code class="inline">{"valid": False, "error": "Tool not legislated"}</code>. Invalid amounts raise.</td></tr>
+                        <tr><td><code class="inline">registry.verify_and_resolve_tool</code></td><td><code class="inline">verify_and_resolve_tool(tool_name) -&gt; Callable</code></td><td>Enforces Harbor OCI verification when repository/digest are set. Raises <code class="inline">GovernanceViolation</code>.</td></tr>
+                        <tr><td><code class="inline">registry.validate_against_policy</code></td><td><code class="inline">validate_against_policy(allowed_tools) -&gt; bool</code></td><td>Raises <code class="inline">PermissionError</code> if a registered tool is missing from a non-empty list.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent</code></td><td><code class="inline">__init__(persona, policy, router, telemetry=None, hitl_manager=None)</code></td><td>Initializes agent and constructs <code class="inline">SemanticGuard</code> from <code class="inline">policy.alignment</code>.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent.bootstrap</code></td><td><code class="inline">bootstrap(policy_path, router_client, slack_channel=None)</code></td><td>Factory loading YAML and configuring Slack HITL via <code class="inline">SLACK_BOT_TOKEN</code> / <code class="inline">SLACK_APP_TOKEN</code>.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent.execute</code></td><td><code class="inline">async execute(task: str) -&gt; ExecutionSnapshot</code></td><td>Executes governed loop; terminal statuses: <code class="inline">success</code>, <code class="inline">blocked</code>, <code class="inline">error</code>, <code class="inline">timeout</code>.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent.evaluate</code></td><td><code class="inline">async evaluate(guards, intent=None, value=0.0)</code></td><td>Runs fiscal circuit breaker and conditional HITL judiciary checks.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent.perform_action</code></td><td><code class="inline">async perform_action(action, params) -&gt; str</code></td><td>Returns formatted execution confirmation string.</td></tr>
+                        <tr><td><code class="inline">ExecutiveAgent.post_session_cleanup</code></td><td><code class="inline">async post_session_cleanup()</code></td><td>Runs <code class="inline">MetaGovernor</code> on <code class="inline">logs/audit_trail.jsonl</code> (threshold 3) and escalates proposals.</td></tr>
+                        <tr><td><code class="inline">CircuitBreaker.check_financial_risk</code></td><td><code class="inline">check_financial_risk(local_projected_cost)</code></td><td>Raises <code class="inline">GovernanceViolation</code> (<code class="inline">RECURSIVE TCO REJECT</code>) when ceiling is breached.</td></tr>
+                        <tr><td><code class="inline">PrivacyGuard.redact_task</code></td><td><code class="inline">redact_task(text) -&gt; str</code></td><td>Presidio PII anonymization. Requires <code class="inline">en_core_web_lg</code>.</td></tr>
+                        <tr><td><code class="inline">SemanticGuard</code></td><td><code class="inline">__init__(mission, prohibited, threshold=0.60)</code> / <code class="inline">evaluate_alignment(thought) -&gt; float</code></td><td>Empty thought or empty prohibited list returns <code class="inline">1.0</code>. Breach returns <code class="inline">0.0</code>.</td></tr>
+                        <tr><td><code class="inline">RouterConfig</code> / <code class="inline">RoutingRule</code></td><td>Pydantic models</td><td>Rule schema: <code class="inline">condition_key</code>, <code class="inline">expected_value</code>, <code class="inline">target_provider</code>.</td></tr>
+                        <tr><td><code class="inline">PolicyBasedRouter.determine_target</code></td><td><code class="inline">determine_target(context_metadata) -&gt; str</code></td><td>Evaluates routing mode and rules to select provider key.</td></tr>
+                        <tr><td><code class="inline">PolicyBasedRouter.route_and_generate</code></td><td><code class="inline">async route_and_generate(request, context_metadata) -&gt; LLMResponse</code></td><td>Resolves target client and awaits <code class="inline">client.generate(request)</code>.</td></tr>
+                        <tr><td><code class="inline">OllamaClient.generate</code></td><td><code class="inline">async generate(request) -&gt; LLMResponse</code></td><td>POST <code class="inline">/api/generate</code> (60s timeout). Raises <code class="inline">RuntimeError</code> on non-200 status.</td></tr>
+                        <tr><td><code class="inline">LLMRequest</code> / <code class="inline">LLMResponse</code></td><td>Pydantic models</td><td>Request/response envelopes (<code class="inline">raw_usage</code> requires integer values).</td></tr>
+                        <tr><td><code class="inline">TelemetryManager</code></td><td><code class="inline">__init__(buffer_path="logs/audit_buffer.jsonl")</code></td><td>Manages <code class="inline">start_trace</code>, <code class="inline">log_step</code>, <code class="inline">add_exporter</code>, and async <code class="inline">finalize</code> with JSONL DLQ fallback.</td></tr>
+                        <tr><td>Context Helpers</td><td><code class="inline">set_current_agent</code>, <code class="inline">get_current_agent</code>, <code class="inline">reset_current_agent</code></td><td>Contextvar accessors for parent-trace inheritance across sub-agents.</td></tr>
+                        <tr><td>Ledger Helpers</td><td><code class="inline">reset_fiscal_ledger</code>, <code class="inline">update_shared_spend</code>, <code class="inline">get_shared_fiscal_metrics</code></td><td>Thread-isolated swarm spend tracking (<code class="inline">cumulative_spend</code>, <code class="inline">task_counter</code>).</td></tr>
+                        <tr><td><code class="inline">HITLManager.secure_approval</code></td><td><code class="inline">async secure_approval(agent_id, reason, context=None, triggered_by="policy", config=None) -&gt; bool</code></td><td>Quorum scoring: amount &ge; 5000 requires 4.0 (TIER_3), &ge; 1000 requires 2.5 (TIER_2), else 1.0. Weights: C-Suite 3.0, Director 2.0, Auditor 1.5, Lead 1.0, Clerk 0.5. Any REJECTED vote vetoes.</td></tr>
+                        <tr><td><code class="inline">EvidencePackGenerator.generate</code></td><td><code class="inline">generate(system_anchor="govagent-enterprise-mesh") -&gt; ComplianceDossier</code></td><td>Aggregates audit logs and seals the returned <code class="inline">ComplianceDossier</code>.</td></tr>
+                        <tr><td><code class="inline">CFOAnalyticsEngine.analyze</code></td><td><code class="inline">analyze() -&gt; CFORiskReport</code></td><td>Computes cost center rollups, value-at-risk, and burn-rate anomalies.</td></tr>
+                        <tr><td><code class="inline">MetaGovernor.analyze_friction</code></td><td><code class="inline">analyze_friction() -&gt; dict</code></td><td>Detects recurring TCO rejections and generates policy limit amendments.</td></tr>
+                        <tr><td><code class="inline">PricingEngine.calculate_cost</code></td><td><code class="inline">calculate_cost(model, tokens) -&gt; float</code></td><td>Class method in <code class="inline">govagent.pricing</code> (default 10% markup).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="errors">
+            <h2>Errors &amp; Behavior Notes</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Exception / Status</th><th>Trigger Condition</th></tr></thead>
+                    <tbody>
+                        <tr><td><code class="inline">ImportError</code> (<code class="inline">sentence-transformers</code>)</td><td>Constructing <code class="inline">ExecutiveAgent</code> or <code class="inline">SemanticGuard</code> without the <code class="inline">enterprise</code> extra.</td></tr>
+                        <tr><td><code class="inline">PermissionError</code> UNAUTHORIZED TOOL</td><td>A registered tool is missing from a non-empty <code class="inline">tools:</code> allow-list.</td></tr>
+                        <tr><td><code class="inline">PermissionError</code> Risk downgrade</td><td>YAML <code class="inline">risk_level</code> exceeds the decorator's <code class="inline">risk_level</code> (<code class="inline">low &lt; medium &lt; high</code>).</td></tr>
+                        <tr><td><code class="inline">GovernanceViolation</code> RECURSIVE TCO REJECT</td><td>Projected swarm spend exceeds <code class="inline">min(recursive_tco_ceiling, daily_budget_usd)</code>.</td></tr>
+                        <tr><td><code class="inline">GovernanceViolation</code> REGISTRY EXCEPTION</td><td>Calling <code class="inline">verify_and_resolve_tool</code> on an unregistered tool name.</td></tr>
+                        <tr><td><code class="inline">GovernanceViolation</code> HARBOR REGISTRY BLOCK</td><td>Harbor v2 (or the offline malicious stub) failed image signature or CVE verification.</td></tr>
+                        <tr><td><code class="inline">GovernanceViolation</code> Human Judiciary denied</td><td><code class="inline">secure_approval</code> returned <code class="inline">False</code> or received a veto vote.</td></tr>
+                        <tr><td><code class="inline">ValidationError</code> / <code class="inline">ValueError</code></td><td>Malformed tool arguments; caught by <code class="inline">execute()</code> and surfaced as status <code class="inline">blocked</code>.</td></tr>
+                        <tr><td><code class="inline">ValueError</code> Router misconfiguration</td><td>Configured <code class="inline">default_provider</code> is not present in the router's client map.</td></tr>
+                        <tr><td><code class="inline">RuntimeError</code> Ollama inference failed</td><td>Non-200 HTTP response from the Ollama <code class="inline">/api/generate</code> endpoint.</td></tr>
+                        <tr><td>Execution status <code class="inline">error</code></td><td>Any non-governance exception during execution, including float values in <code class="inline">LLMResponse.raw_usage</code>.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>SemanticGuard Calibration Note:</strong> Evaluated against the sample finance prohibited strategies list, an empty string returns <code class="inline">1.0</code>, a standard budget query scores <code class="inline">~0.813</code>, and an overtly adversarial prompt (<em>“We should pursue aggressive tax avoidance and predatory pricing against patients.”</em>) scores <code class="inline">~0.293</code>. Because <code class="inline">SemanticGuard</code> triggers a breach (<code class="inline">0.0</code>) when cosine similarity exceeds the configured threshold, setting <code class="inline">min_similarity_score: 0.85</code> is permissive for <code class="inline">all-MiniLM-L6-v2</code>; thresholds around <code class="inline">0.30–0.45</code> provide tighter semantic enforcement.</p>
+            <div class="warn">
+                <strong>Metadata &amp; Version Notes:</strong> <code class="inline">pyproject.toml</code> publishes version <strong>3.1.0</strong> (no runtime <code class="inline">govagent.__version__</code> attribute is exposed). <code class="inline">ComplianceDossier.framework_version</code> emits the string literal <code class="inline">"3.0.0"</code>, and sample templates under <code class="inline">policies/</code> carry header version <code class="inline">0.6.0</code> with legacy <code class="inline">registry_alignment</code> blocks that should be migrated to top-level <code class="inline">tools:</code> definitions for active allow-list enforcement.
+            </div>
+        </section>
+
+        <section id="simulator">
+            <h2>Interactive Policy Projector</h2>
+            <p>Browser port of <code class="inline">govagent.policy._project_global_limits</code> and <code class="inline">Policy.is_high_risk</code>. Paste a policy configuration as JSON to inspect how <code class="inline">Policy</code> normalizes limits, tool allow-lists, and effective circuit breaker ceilings at runtime.</p>
+            <div class="playground">
+                <div class="pg-grid">
+                    <div>
+                        <div class="code-label">Policy Input (JSON)</div>
+                        <textarea id="policyInput" spellcheck="false"></textarea>
+                    </div>
+                    <div>
+                        <div class="code-label">Projected Runtime Policy</div>
+                        <textarea id="projector-output" spellcheck="false" readonly></textarea>
                     </div>
                 </div>
-                
-                <div class="bg-black border border-neutral-800 rounded-2xl p-6 font-mono text-xs space-y-4 text-neutral-400">
-                    <div class="flex justify-between items-center pb-2 border-b border-neutral-900">
-                        <span class="text-neutral-500">Registry Path</span>
-                        <a href="https://pypi.org/project/govagent/" target="_blank" class="text-neutral-300 hover:underline">pypi.org/project/govagent</a>
-                    </div>
-                    <div class="flex justify-between items-center pb-2 border-b border-neutral-900">
-                        <span class="text-neutral-500">Licensing</span>
-                        <span class="text-neutral-200">MIT Open Source</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-2 border-b border-neutral-900">
-                        <span class="text-neutral-500">Deployment Target</span>
-                        <span class="text-neutral-200">Local SLMs / Enterprise Clusters</span>
-                    </div>
-                    <div class="bg-neutral-950 p-4 rounded-xl border border-neutral-900 text-neutral-300 text-sm">
-                        <span class="text-neutral-600">$</span> pip install govagent==3.0.3
-                    </div>
+                <div class="btn-row">
+                    <button class="action" type="button" onclick="projectPolicy()">Project Limits &amp; Tools</button>
+                    <button class="action secondary" type="button" onclick="loadFinanceSample()">Load Finance Policy Sample</button>
+                    <button class="action secondary" type="button" onclick="loadToolsSample()">Load Tools Allow-List Sample</button>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="author" class="py-24 bg-[#020203]">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            
-            <div class="mb-8 flex justify-center">
-                <div class="relative group">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-neutral-800 to-white rounded-full opacity-30 blur group-hover:opacity-50 transition duration-300"></div>
-                    <img class="relative w-24 h-24 rounded-full object-cover border-2 border-neutral-800" 
-                         src="https://github.com/thekakodkar.png" 
-                         alt="Niraj Kakodkar"
-                         onerror="this.src='https://ui-avatars.com/api/?name=Niraj+Kakodkar&background=0D0E10&color=fff'">
-                </div>
+        <footer>
+            <span>govAgent v3.1.0 &bull; Author: <a href="https://www.linkedin.com/in/thekakodkar/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Niraj Kakodkar</a> &bull; MIT License</span>
+            <div class="footer-links">
+                <a href="https://github.com/thekakodkar/GovAgent" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://pypi.org/project/govagent/" target="_blank" rel="noopener noreferrer">PyPI</a>
+                <a href="https://www.linkedin.com/in/thekakodkar/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
             </div>
+        </footer>
+    </div>
+</main>
 
-            <p class="text-xs font-semibold uppercase tracking-[0.4em] text-neutral-500 mb-4">Architectural Provenance</p>
-            <h2 class="text-3xl font-bold tracking-tight mb-6">Behind the Framework</h2>
-            <p class="text-lg text-neutral-300 font-light max-w-2xl mx-auto leading-relaxed mb-6">
-                GovAgent was conceptualized and engineered by <strong>Niraj Kakodkar</strong>, an AI strategist and technical director with over two decades of enterprise digital transformation history.
-            </p>
-            <p class="text-base text-neutral-400 font-light max-w-2xl mx-auto leading-relaxed mb-12">
-                Designed explicitly to bridge the gap between autonomous technical execution and corporate risk management, the framework applies architectural rigor to the world of open-source Small Language Models (SLMs) and agent orchestration.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 max-w-xl mx-auto">
-                <a href="https://www.linkedin.com/in/thekakodkar" target="_blank" class="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white px-6 py-3 rounded-full transition-all">
-                    Connect on LinkedIn
-                </a>
-                <a href="https://github.com/thekakodkar" target="_blank" class="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider bg-white hover:bg-neutral-200 text-black px-6 py-3 rounded-full transition-all">
-                    Follow on GitHub
-                </a>
-                <a href="https://www.youtube.com/@DecodeAIWithNiraj" target="_blank" class="w-full sm:w-auto text-xs font-semibold uppercase tracking-wider bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white px-6 py-3 rounded-full transition-all">
-                    Decode AI on YouTube
-                </a>
-            </div>
-        </div>
-    </section>
+<script>
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    if (localStorage.getItem("govagent_sidebar_collapsed") === "true") {
+        document.body.classList.add("sidebar-collapsed");
+    }
+    sidebarToggle.addEventListener("click", () => {
+        document.body.classList.toggle("sidebar-collapsed");
+        localStorage.setItem(
+            "govagent_sidebar_collapsed",
+            document.body.classList.contains("sidebar-collapsed")
+        );
+    });
 
-    <footer class="py-16 max-w-7xl mx-auto px-6 text-center text-neutral-500 text-sm border-t border-neutral-950">
-        <p class="mb-2 font-medium tracking-wide">&copy; 2026 govagent architecture. All rights reserved.</p>
-        <p class="font-light text-neutral-600">Engineered for deterministic execution boundaries and high-status compliance ecosystems.</p>
-    </footer>
+    // Highlight active navigation link on scroll
+    const navLinks = document.querySelectorAll("aside a.nav-link");
+    const observedTargets = Array.from(navLinks)
+        .map(link => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
 
+    window.addEventListener("scroll", () => {
+        let currentId = "";
+        const scrollPos = window.scrollY + 140;
+        observedTargets.forEach(el => {
+            if (el.offsetTop <= scrollPos) {
+                currentId = el.getAttribute("id");
+            }
+        });
+        if (currentId) {
+            navLinks.forEach(link => {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + currentId);
+            });
+        }
+    }, { passive: true });
+
+    function copyCode(btn) {
+        const pre = btn.nextElementSibling;
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const orig = btn.innerText;
+            btn.innerText = "Copied!";
+            setTimeout(() => { btn.innerText = orig; }, 1500);
+        });
+    }
+
+    // Exact port of govagent.policy._project_global_limits
+    function projectGlobalLimits(config) {
+        const defaults = {
+            daily_budget_usd: 10.0,
+            max_per_transaction: 2000.0,
+            max_tokens_per_run: 4000
+        };
+        const top = config.global_limits;
+        const explicit = (top && typeof top === "object" && !Array.isArray(top)) ? top : {};
+        const limits = (top && typeof top === "object" && !Array.isArray(top))
+            ? Object.assign({}, explicit)
+            : Object.assign({}, defaults);
+        const fiscal = config.fiscal_governance;
+        const nested = (fiscal && typeof fiscal === "object") ? fiscal.global_limits : null;
+        if (!nested || typeof nested !== "object" || Array.isArray(nested)) {
+            return limits;
+        }
+        Object.keys(nested).forEach(function (key) {
+            const target = (key === "recursive_tco_limit") ? "recursive_tco_ceiling" : key;
+            if (Object.prototype.hasOwnProperty.call(explicit, key) || Object.prototype.hasOwnProperty.call(explicit, target)) {
+                return;
+            }
+            limits[target] = nested[key];
+        });
+        return limits;
+    }
+
+    function isHighRisk(toolRules, toolName) {
+        const rule = toolRules[toolName] || {};
+        return Boolean(rule.require_human_approval || rule.risk_level === "high");
+    }
+
+    function projectPolicy() {
+        const out = document.getElementById("projector-output");
+        try {
+            const config = JSON.parse(document.getElementById("policyInput").value);
+            const metadata = (config.metadata && typeof config.metadata === "object") ? config.metadata : {};
+            const agentName = metadata.agent_name || "UnknownAgent";
+            const infra = (config.infrastructure && typeof config.infrastructure === "object") ? config.infrastructure : {};
+            const routingMode = infra.routing_mode || "LOCAL_ONLY";
+            const defaultProvider = infra.default_provider || "local_ollama";
+            const routingRules = infra.rules || [];
+            const toolList = Array.isArray(config.tools) ? config.tools : [];
+            const toolRules = {};
+            toolList.forEach(function (t) {
+                if (t && t.name) toolRules[t.name] = t;
+            });
+            const allowedTools = Object.keys(toolRules);
+            const globalLimits = projectGlobalLimits(config);
+            const alignment = (config.alignment && typeof config.alignment === "object") ? config.alignment : {};
+            const highRisk = {};
+            allowedTools.forEach(function (name) {
+                highRisk[name] = isHighRisk(toolRules, name);
+            });
+            const tco = (globalLimits.recursive_tco_ceiling !== undefined) ? globalLimits.recursive_tco_ceiling : 150.0;
+            const daily = (globalLimits.daily_budget_usd !== undefined) ? globalLimits.daily_budget_usd : 100.0;
+            const result = {
+                agent_name: agentName,
+                routing_mode: routingMode,
+                default_provider: defaultProvider,
+                routing_rules: routingRules,
+                global_limits: globalLimits,
+                alignment_keys: Object.keys(alignment),
+                allowed_tools: allowedTools,
+                is_high_risk: highRisk,
+                reads_registry_alignment: false,
+                registry_alignment_present: Boolean(config.registry_alignment),
+                note: "Policy.allowed_tools and is_high_risk evaluate the top-level tools: list only.",
+                circuit_breaker_effective_limit: Math.min(tco, daily)
+            };
+            out.value = JSON.stringify(result, null, 2);
+        } catch (err) {
+            out.value = "Error: " + err.message;
+        }
+    }
+
+    function loadFinanceSample() {
+        document.getElementById("policyInput").value = JSON.stringify({
+            metadata: {
+                agent_name: "Healthcare Finance Director",
+                version: "0.6.0",
+                compliance_standard: "EU AI Act - Article 9, 12 & 14"
+            },
+            infrastructure: {
+                routing_mode: "HYBRID",
+                default_provider: "local_ollama",
+                rules: [
+                    {condition_key: "contains_pii", expected_value: true, target_provider: "local_ollama"},
+                    {condition_key: "tool_complexity", expected_value: "high", target_provider: "cloud_openai"}
+                ]
+            },
+            registry_alignment: {
+                allowed_tools: ["execute_financial_transaction", "audit_transaction_logs"],
+                high_risk_tools: ["execute_financial_transaction"]
+            },
+            fiscal_governance: {
+                currency: "USD",
+                global_limits: {
+                    transaction_ceiling: 2000.00,
+                    daily_budget_usd: 100.00,
+                    recursive_tco_limit: 500.00
+                }
+            },
+            alignment: {
+                min_similarity_score: 0.85,
+                mission_statement: "Act as a conservative healthcare finance director.",
+                prohibited_strategies: [
+                    "Aggressive tax avoidance or predatory pricing.",
+                    "Sharing unredacted patient data with third-party vendors."
+                ]
+            },
+            oversight: {
+                judiciary: {
+                    high_risk_protocol: {min_approvals: 2, quorum_size: 3, timeout_seconds: 3600}
+                }
+            }
+        }, null, 2);
+        projectPolicy();
+    }
+
+    function loadToolsSample() {
+        document.getElementById("policyInput").value = JSON.stringify({
+            metadata: {agent_name: "Treasury"},
+            tools: [
+                {name: "execute_financial_transaction", risk_level: "high", require_human_approval: true}
+            ],
+            fiscal_governance: {
+                global_limits: {daily_budget_usd: 100.0, recursive_tco_limit: 150.0}
+            }
+        }, null, 2);
+        projectPolicy();
+    }
+
+    window.onload = loadFinanceSample;
+</script>
 </body>
 </html>
