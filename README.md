@@ -22,6 +22,7 @@ Ideal for:
 ### Usage Guide
 <p align="center">
   <a href="https://thekakodkar.github.io/govAgent/">
+     govAgent v3.1.0 - Library Documentation
   </a>
 </p>
 
