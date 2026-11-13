@@ -1,6 +1,6 @@
 <img width="100%" alt="govAgent logo" src="https://github.com/user-attachments/assets/7aed634c-34e0-450c-9a7e-ee03ecd26ea5" />
 
-# govAgent (v3.1.0)
+# govAgent (v3.3.0)
 
 **The Governance-First Control Plane for AI Agents & Swarms**
 
@@ -22,7 +22,7 @@ Ideal for:
 ### Usage Guide
 <p align="center">
   <a href="https://thekakodkar.github.io/govAgent/">
-     govAgent v3.1.0 - Library Documentation
+     govAgent - Library Documentation
   </a>
 </p>
 
@@ -426,6 +426,6 @@ We enforce a strict branching strategy to keep `main` stable:
 
 ---
 ### Author Stamp
-*   **Framework:** GovAgent v3.1.0 
+*   **Framework:** GovAgent v3.3.0 
 *   **Compliance:** Designed for Article 9, 12, and 14 Accountability
 *   **Status:** Active / Open-Source Standard
