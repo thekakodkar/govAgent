@@ -19,6 +19,11 @@ Ideal for:
 * **Regulated Verticals:** Providing verifiable compliance out-of-the-box for Fintech, Supply Chain, Healthcare, Heavy Industry, and Legal infrastructure.
 * **Sovereign Infrastructure Operations:** Powering local Small Language Models (SLMs) and private inference nodes safely alongside or entirely independent of cloud providers.
 
+### Usage Guide
+<p align="center">
+  <a href="https://thekakodkar.github.io/govAgent/">
+  </a>
+</p>
 ### 🎞️ Video Walkthrough
 
 <p align="center">
