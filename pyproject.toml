@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "govagent"
-version = "3.1.0"
+version = "3.2.0"
 description = "The Governance-First Framework for Agentic AI, Enterprise Middleware & OCI Supply Chain Gating"
 authors = ["Niraj Kakodkar <niraj.kakodkar@gmail.com>"]
 readme = "README.md"
@@ -63,4 +63,4 @@ fastapi = ">=0.100.0"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/thekakodkar/govagent/issues"
-"LinkedIn" = "https://www.linkedin.com/in/thekakodkar/"
+"LinkedIn" = "https://thekakodkar.github.io/govAgent/"
