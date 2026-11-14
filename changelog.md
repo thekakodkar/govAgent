@@ -6,6 +6,16 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ## [Unreleased]
 
+These changes are on `main` only. They are **not** part of the tagged PyPI release `govagent==3.4.0`. Do not treat this section as a published version.
+
+### Added
+
+- Broader unit coverage for Slack HITL, the Ollama client, the policy router, evidence-pack generation, CloudWatch / Azure / JSONL exporters, and pricing, with network clients mocked. Target coverage is at least 85%.
+- `GovernedMCPGateway` (`govagent.extensions.mcp`) applies the policy allow-list, PrivacyGuard redaction, SemanticGuard, the fiscal circuit breaker, HITL, and the audit log to an MCP tool call or a local callable. Optional extra: `govagent[mcp]` (official Python `mcp` SDK). Example: `examples/mcp_governed_tool.py`. The existing `BobMCPProxyGateway` is unchanged.
+- Packaged, machine-readable control mapping at `govagent.compliance.controls.yaml` (also loadable as JSON via `control_catalog_json()`). It maps EU AI Act Articles 9/12/14, ISO/IEC 42001 Annex A fragments, and NIST AI RMF functions to GovAgent features and evidence fields. `EvidencePackGenerator.generate` records `mapped_controls`, `control_mapping_version`, and a disclaimer on `ComplianceDossier`. This is **not** a certification or declaration of conformity.
+- Optional cloud model clients with tool-calling and usage/cost mapping onto `LLMResponse`: `OpenAIClient` and `AzureOpenAIClient` (`govagent[openai]`), and `AnthropicClient` (`govagent[anthropic]`).
+- `ExecutiveAgent.aexecute` is the explicit async execute loop. `execute` remains an awaitable wrapper (`return await self.aexecute(task)`), so existing `await agent.execute(...)` call sites are unchanged. Sync callers can use `asyncio.run(agent.aexecute(...))`.
+
 ## [3.4.0] - 2026-11-14
 ### Behavior changes
 

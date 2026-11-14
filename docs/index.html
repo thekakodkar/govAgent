@@ -302,7 +302,7 @@
             <h2 class="section" id="overview">Overview</h2>
             <p>Public imports:</p>
             <pre>from govagent import ExecutiveAgent, tool, Policy, registry, __version__</pre>
-            <p>The standard path is: load a <code class="inline">Policy</code>, register tools with <code class="inline">@tool</code>, inject a router that returns <code class="inline">LLMResponse</code>, then <code class="inline">await agent.execute(task)</code>. The loop redacts PII, runs SemanticGuard on the sanitized task, routes the request (including a real <code class="inline">contains_pii</code> flag), validates the tool schema, applies fiscal and judiciary guards, verifies Harbor when OCI fields are set, and <strong>invokes the registered Python callable</strong>.</p>
+            <p>The standard path is: load a <code class="inline">Policy</code>, register tools with <code class="inline">@tool</code>, inject a router that returns <code class="inline">LLMResponse</code>, then <code class="inline">await agent.execute(task)</code> or <code class="inline">await agent.aexecute(task)</code>. The loop redacts PII, runs SemanticGuard on the sanitized task, routes the request (including a real <code class="inline">contains_pii</code> flag), validates the tool schema, applies fiscal and judiciary guards, verifies Harbor when OCI fields are set, and <strong>invokes the registered Python callable</strong>.</p>
 
             <h2 class="section" id="install">Install</h2>
             <pre>pip install "govagent[enterprise]"
@@ -311,7 +311,7 @@ python -m spacy download en_core_web_lg</pre>
                 <li>Requires <strong>Python 3.10, 3.11, 3.12, or 3.13</strong> (<code class="inline">&gt;=3.10,&lt;3.14</code>).</li>
                 <li>The core wheel includes Presidio, spaCy, Pydantic, YAML, httpx, Slack, AWS and Azure telemetry clients, and <code class="inline">opentelemetry-api</code>.</li>
                 <li><code class="inline">govagent[enterprise]</code> adds <code class="inline">sentence-transformers</code> (local MiniLM embeddings). Without it, <code class="inline">ExecutiveAgent</code> still constructs; SemanticGuard logs a warning and fails open until the extra is installed.</li>
-                <li>Optional extras: <code class="inline">crewai</code>, <code class="inline">langchain</code>.</li>
+                <li>Optional extras: <code class="inline">crewai</code>, <code class="inline">langchain</code>, <code class="inline">openai</code>, <code class="inline">anthropic</code>, <code class="inline">mcp</code>.</li>
                 <li>To use the current <code class="inline">main</code> behavior before the next PyPI publish: <code class="inline">pip install "govagent[enterprise] @ git+https://github.com/thekakodkar/GovAgent.git"</code>.</li>
                 <li>Privacy analysis expects the spaCy model <code class="inline">en_core_web_lg</code>.</li>
             </ul>
@@ -419,20 +419,23 @@ asyncio.run(main())</pre>
                     <tr><td><code class="inline">govagent.__version__</code></td><td>From <code class="inline">importlib.metadata.version("govagent")</code>, matching pyproject when the package is installed.</td></tr>
                     <tr><td><code class="inline">Policy</code> / <code class="inline">Policy.from_yaml</code></td><td>Projects fiscal limits, alignment, <code class="inline">registry_alignment</code>, <code class="inline">tools:</code>, <code class="inline">oversight</code>, and judiciary. <code class="inline">allowed_tools</code> and <code class="inline">is_high_risk()</code> honour those sources.</td></tr>
                     <tr><td><code class="inline">@tool</code></td><td>Registers a callable on the process-wide <code class="inline">registry</code> singleton, optionally with <code class="inline">schema</code>, <code class="inline">oci_repository</code>, and <code class="inline">artifact_digest</code>.</td></tr>
-                    <tr><td><code class="inline">ExecutiveAgent.execute</code></td><td><code class="inline">async execute(task: str) -&gt; ExecutionSnapshot</code></td></tr>
+                    <tr><td><code class="inline">ExecutiveAgent.execute</code></td><td><code class="inline">async execute(task: str) -&gt; ExecutionSnapshot</code> — unchanged awaitable wrapper around <code class="inline">aexecute</code>.</td></tr>
+                    <tr><td><code class="inline">ExecutiveAgent.aexecute</code></td><td><code class="inline">async aexecute(task: str) -&gt; ExecutionSnapshot</code> — the explicit async execute loop. Sync callers can use <code class="inline">asyncio.run(agent.aexecute(...))</code>.</td></tr>
+                    <tr><td><code class="inline">OpenAIClient</code>, <code class="inline">AzureOpenAIClient</code>, <code class="inline">AnthropicClient</code></td><td>Optional extras <code class="inline">govagent[openai]</code> and <code class="inline">govagent[anthropic]</code>. Tool calls and usage/cost map onto <code class="inline">LLMResponse</code>.</td></tr>
+                    <tr><td><code class="inline">GovernedMCPGateway</code></td><td>Optional extra <code class="inline">govagent[mcp]</code>. Governs MCP or local tool calls with allow-list, PrivacyGuard, SemanticGuard, fiscal breaker, HITL, and audit log.</td></tr>
                     <tr><td><code class="inline">ExecutiveAgent.perform_action</code></td><td><code class="inline">async perform_action(action, params) -&gt; str</code> — allow-list, Harbor, then the registered function.</td></tr>
                     <tr><td><code class="inline">ExecutiveAgent.bootstrap</code></td><td><code class="inline">bootstrap(policy_path, router_client, slack_channel=None)</code></td></tr>
                     <tr><td><code class="inline">LLMResponse</code></td><td><code class="inline">text</code>, <code class="inline">tool_calls</code>, <code class="inline">raw_usage</code> (int or float values), <code class="inline">model_name</code>, and compatibility alias <code class="inline">selected_model</code>.</td></tr>
                     <tr><td><code class="inline">CircuitBreaker</code></td><td>Semantic, per-transaction, and recursive TCO / daily budget checks.</td></tr>
                     <tr><td><code class="inline">PrivacyGuard</code></td><td><code class="inline">redact_task</code> / <code class="inline">anonymize</code>; <code class="inline">last_execution_had_pii</code>.</td></tr>
                     <tr><td><code class="inline">TelemetryManager</code></td><td>Default JSONL exporter; optional OTel; <code class="inline">persist_jsonl=False</code> to opt out.</td></tr>
-                    <tr><td><code class="inline">MetaGovernor</code>, <code class="inline">CFOAnalyticsEngine</code>, <code class="inline">EvidencePackGenerator</code>, <code class="inline">ComplianceDossier</code></td><td>Post-run analysis and evidence packing. <code class="inline">ComplianceDossier.framework_version</code> defaults to <code class="inline">govagent.__version__</code>.</td></tr>
+                    <tr><td><code class="inline">MetaGovernor</code>, <code class="inline">CFOAnalyticsEngine</code>, <code class="inline">EvidencePackGenerator</code>, <code class="inline">ComplianceDossier</code></td><td>Post-run analysis and evidence packing. <code class="inline">ComplianceDossier.framework_version</code> defaults to <code class="inline">govagent.__version__</code>. Generated dossiers also reference <code class="inline">mapped_controls</code> from the packaged control catalogue.</td></tr>
                 </tbody>
             </table>
 
             <h2 class="section" id="compliance">Compliance mapping</h2>
             <div class="callout warn">
-                <strong>Not a certification and not “regulation ready” by installation alone.</strong> The mapping below is how current <code class="inline">main</code> can <em>help</em> a deployer. Legal obligations remain on the provider or deployer of the AI system. govAgent itself is not a GPAI model and is not ISO/IEC 42001 or NIST AI RMF certified.
+                <strong>Not a certification and not “regulation ready” by installation alone.</strong> The mapping below is how current <code class="inline">main</code> can <em>help</em> a deployer. Legal obligations remain on the provider or deployer of the AI system. govAgent itself is not a GPAI model and is not ISO/IEC 42001 or NIST AI RMF certified. The packaged file <code class="inline">govagent/compliance/controls.yaml</code> (load with <code class="inline">govagent.compliance.load_control_mapping()</code> or <code class="inline">control_catalog_json()</code>) is a documentation and evidence aid only, not an audit opinion or declaration of conformity. <code class="inline">EvidencePackGenerator.generate</code> copies the control IDs and this disclaimer onto <code class="inline">ComplianceDossier</code>.
             </div>
             <table>
                 <thead><tr><th>Framework</th><th>What the library can contribute</th><th>What it does not do</th></tr></thead>
@@ -462,7 +465,7 @@ asyncio.run(main())</pre>
 
             <h2 class="section" id="versions">Versions</h2>
             <ul>
-                <li><code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code>: <strong>3.4.0</strong>.</li>
+                <li><code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code>: <strong>3.4.0</strong>. Features listed as MCP support, the packaged control catalogue, cloud model clients, and <code class="inline">aexecute</code> are unreleased on <code class="inline">main</code> and are not in the tagged PyPI 3.4.0 artifact.</li>
                 <li>The FastAPI sandbox (not in the wheel) and <code class="inline">ComplianceDossier.framework_version</code> now use the same package version.</li>
                 <li>Git tag and GitHub Release: <code class="inline">v3.4.0</code>. PyPI 3.2.0 and 3.3.0 were documentation/metadata publishes without tags.</li>
                 <li>Sample YAML <code class="inline">metadata.version</code> values such as <code class="inline">0.6.0</code> are policy-document versions, not the library version.</li>

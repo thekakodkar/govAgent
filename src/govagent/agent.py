@@ -131,7 +131,11 @@ class ExecutiveAgent:
         return True
 
     async def execute(self, task: str) -> ExecutionSnapshot:
-        """Governed Reasoning Loop driven dynamically by YAML Infrastructure Parameters."""
+        """Governed reasoning loop. Unchanged awaitable wrapper around ``aexecute``."""
+        return await self.aexecute(task)
+
+    async def aexecute(self, task: str) -> ExecutionSnapshot:
+        """Async governed reasoning loop driven by YAML policy parameters."""
         token = set_current_agent(self)
         sanitized_task = self.guard.privacy.redact_task(task)
         self.telemetry.start_trace(self.persona, sanitized_task)

@@ -1,0 +1,122 @@
+# Machine-readable control mapping for govAgent.
+# This is a documentation and evidence aid only. It is NOT a certification,
+# audit opinion, or declaration that a deployer has met the EU AI Act,
+# ISO/IEC 42001, or the NIST AI RMF.
+schema_version: "1.0"
+disclaimer: >
+  This mapping is not a certification, audit opinion, or declaration of
+  conformity with the EU AI Act, ISO/IEC 42001, or the NIST AI RMF.
+  These mappings describe how govAgent features and evidence fields can
+  support a deployer's own compliance programme. Legal obligations remain
+  on the provider or deployer of the AI system.
+frameworks:
+  - id: EU-AI-ACT-ART-9
+    framework: EU AI Act
+    citation: "Regulation (EU) 2024/1689, Article 9"
+    title: Risk management and data governance (fragment)
+    govagent_features:
+      - PrivacyGuard.redact_task
+      - PrivacyGuard.last_execution_had_pii
+      - SemanticGuard.evaluate_alignment
+    evidence_fields:
+      - eu_ai_act_article_9.privacy_redactions
+      - eu_ai_act_article_9.semantic_intent_blocks
+      - eu_ai_act_article_9.total_interceptions
+    residual_gaps:
+      - Does not implement a full risk-management system or residual-risk register.
+  - id: EU-AI-ACT-ART-12
+    framework: EU AI Act
+    citation: "Regulation (EU) 2024/1689, Article 12"
+    title: Record-keeping and traceability
+    govagent_features:
+      - TelemetryManager.default_jsonl_audit_log
+      - TelemetryManager.optional_otel_genai_spans
+      - EvidencePackGenerator.generate
+    evidence_fields:
+      - eu_ai_act_article_12
+      - trace_id
+      - parent_trace_id
+    residual_gaps:
+      - The JSONL file is not by itself a legally immutable WORM archive.
+  - id: EU-AI-ACT-ART-14
+    framework: EU AI Act
+    citation: "Regulation (EU) 2024/1689, Article 14"
+    title: Human oversight
+    govagent_features:
+      - Policy.is_high_risk
+      - HITLManager.secure_approval
+      - SlackJudiciaryAdapter
+    evidence_fields:
+      - eu_ai_act_article_14
+      - judiciary_record
+    residual_gaps:
+      - Operators must still wire a real approval channel and operating procedure.
+  - id: ISO-42001-A.6
+    framework: ISO/IEC 42001:2023
+    citation: "Annex A, A.6 (AI system life cycle)"
+    title: Life-cycle controls that a library can support technically
+    govagent_features:
+      - Policy.from_yaml
+      - ExecutiveAgent.aexecute
+      - HarborVerifier.verify_tool_artifact
+    evidence_fields:
+      - mapped_controls
+    residual_gaps:
+      - No Statement of Applicability or certified AI management system.
+  - id: ISO-42001-A.8
+    framework: ISO/IEC 42001:2023
+    citation: "Annex A, A.8 (Data)"
+    title: Data-handling technical controls
+    govagent_features:
+      - PrivacyGuard.redact_task
+    evidence_fields:
+      - eu_ai_act_article_9.privacy_redactions
+    residual_gaps:
+      - Not a complete data-governance programme.
+  - id: NIST-AI-RMF-GOVERN
+    framework: NIST AI RMF
+    citation: "GOVERN"
+    title: Policies and accountability hooks
+    govagent_features:
+      - Policy
+      - MetaGovernor
+    evidence_fields:
+      - mapped_controls
+    residual_gaps:
+      - No organisational GOVERN workbook.
+  - id: NIST-AI-RMF-MAP
+    framework: NIST AI RMF
+    citation: "MAP"
+    title: Context and policy constraints
+    govagent_features:
+      - Policy.alignment
+      - Policy.global_limits
+    evidence_fields:
+      - mapped_controls
+    residual_gaps:
+      - Context mapping remains a deployer activity.
+  - id: NIST-AI-RMF-MEASURE
+    framework: NIST AI RMF
+    citation: "MEASURE"
+    title: Telemetry and evidence packs
+    govagent_features:
+      - TelemetryManager
+      - EvidencePackGenerator
+      - CFOAnalyticsEngine
+    evidence_fields:
+      - eu_ai_act_article_12
+      - dossier_sha256
+    residual_gaps:
+      - No complete measurement catalog.
+  - id: NIST-AI-RMF-MANAGE
+    framework: NIST AI RMF
+    citation: "MANAGE"
+    title: Runtime blocking, HITL, and fiscal gates
+    govagent_features:
+      - CircuitBreaker
+      - HITLManager
+    evidence_fields:
+      - eu_ai_act_article_9.total_interceptions
+      - eu_ai_act_article_14
+    residual_gaps:
+      - Residual-risk acceptance stays with the deployer.

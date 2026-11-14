@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from govagent._version import __version__
+from govagent.compliance import DISCLAIMER, control_ids, load_control_mapping
 
 
 class Article9RiskMitigation(BaseModel):
@@ -53,6 +54,9 @@ class ComplianceDossier(BaseModel):
     eu_ai_act_article_12: list[Article12TraceRecord]
     eu_ai_act_article_14: list[Article14OversightRecord]
     dossier_sha256: str | None = None
+    control_mapping_version: str | None = None
+    mapped_controls: list[str] = Field(default_factory=list)
+    control_mapping_disclaimer: str | None = None
 
     def seal(self) -> str:
         """Computes an immutable cryptographic digest of the complete compliance dossier."""
@@ -145,6 +149,7 @@ class EvidencePackGenerator:
                     )
                 )
 
+        mapping = load_control_mapping()
         dossier = ComplianceDossier(
             export_id=f"EXP-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}",
             generated_at=datetime.now(timezone.utc).isoformat(),
@@ -152,6 +157,9 @@ class EvidencePackGenerator:
             eu_ai_act_article_9=art9,
             eu_ai_act_article_12=art12_records,
             eu_ai_act_article_14=art14_records,
+            control_mapping_version=str(mapping.get("schema_version") or "1.0"),
+            mapped_controls=control_ids(),
+            control_mapping_disclaimer=str(mapping.get("disclaimer") or DISCLAIMER),
         )
         dossier.seal()
         return dossier

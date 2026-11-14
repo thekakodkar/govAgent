@@ -160,7 +160,7 @@ poetry install --extras "langchain"
 # Test suite: CrewAI adapter, local embeddings, and the dev server.
 # sentence-transformers is required to construct ExecutiveAgent because
 # SemanticGuard loads during __init__.
-poetry install --with dev --extras "crewai enterprise"
+poetry install --with dev --extras "crewai enterprise openai anthropic mcp"
 
 # Presidio's default AnalyzerEngine requests en_core_web_lg.
 python -m spacy download en_core_web_lg
@@ -184,6 +184,13 @@ GovAgent utilizes a highly modular package structure to enforce a strict "Separa
 **govagent.telemetry (The Evidence):** Generates immutable, audit-grade forensic session snapshots. If primary multi-cloud security operations center (SOC) ingestion sinks (AWS CloudWatch or Azure Log Analytics) experience network interruptions, the layer automatically drops telemetry payloads into a localized, self-healing Dead-Letter Queue (DLQ) to ensure continuous regulatory traceability.
 
 **govagent.governance.meta (The Optimization):** Hosts the MetaGovernor engine, an automated self-healing policy loop. It continuously scrapes friction logs and repeated circuit-breaker events (such as successive budget rejections) to autonomously compile non-hallucinated, data-backed POLICY_AMENDMENT_PROPOSALS for review.
+
+**Unreleased on main (not in the tagged PyPI 3.4.0 package):**
+
+- `await agent.aexecute(task)` is the explicit async loop; `await agent.execute(task)` is unchanged and still works.
+- Optional extras: `govagent[openai]` (`OpenAIClient`, `AzureOpenAIClient`), `govagent[anthropic]` (`AnthropicClient`), and `govagent[mcp]` (official MCP SDK). The clients map tool calls and token usage, including `estimated_cost_usd`, onto `LLMResponse`. Tests mock the network.
+- `GovernedMCPGateway` governs MCP or local tool calls with the same policy allow-list, PrivacyGuard, SemanticGuard, fiscal breaker, HITL, and audit log as `ExecutiveAgent`. See `examples/mcp_governed_tool.py`.
+- `govagent.compliance.controls.yaml` is a machine-readable mapping of EU AI Act articles, ISO/IEC 42001 Annex A items, and NIST AI RMF functions to library features and evidence fields. `EvidencePackGenerator` copies those control IDs onto the dossier. **This is not a certification.**
 
 **govagent.governance (3.1.0 exports):** `CFOAnalyticsEngine`, `EvidencePackGenerator`, and `ComplianceDossier` are importable from `govagent.governance`. The evidence generator reads a local JSONL buffer. A multi-tenant dossier is built from stored rows in the private control plane, [govagent-platform](https://github.com/thekakodkar/govagent-platform). `Policy` reads nested `fiscal_governance.global_limits` and `alignment` unless the same key is set at the top level. `HarborVerifier` calls Harbor v2 and fails closed unless the process is explicitly using the `mock-token` offline stub.
 

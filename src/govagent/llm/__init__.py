@@ -1,5 +1,19 @@
+from .anthropic_client import AnthropicClient
 from .base import BaseLLMClient, LLMRequest, LLMResponse
 from .ollama import OllamaClient
-from .router import PolicyBasedRouter, RouterConfig, RoutingMode, RoutingRule  # Add this export
+from .openai_client import AzureOpenAIClient, OpenAIClient
+from .router import PolicyBasedRouter, RouterConfig, RoutingMode, RoutingRule
 
-__all__ = ["BaseLLMClient", "LLMRequest", "LLMResponse", "OllamaClient", "PolicyBasedRouter", "RouterConfig", "RoutingMode", "RoutingRule"]
+__all__ = [
+    "AnthropicClient",
+    "AzureOpenAIClient",
+    "BaseLLMClient",
+    "LLMRequest",
+    "LLMResponse",
+    "OllamaClient",
+    "OpenAIClient",
+    "PolicyBasedRouter",
+    "RouterConfig",
+    "RoutingMode",
+    "RoutingRule",
+]

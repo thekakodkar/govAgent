@@ -27,6 +27,10 @@ def test_library_archives_exclude_platform_and_export_governance():
             joined = "\n".join(names)
             for banned in BANNED:
                 assert banned not in joined, f"{archive.name} contains {banned}"
+            if archive.suffix == ".whl":
+                assert any(name.endswith("govagent/compliance/controls.yaml") for name in names), (
+                    f"{archive.name} is missing govagent/compliance/controls.yaml"
+                )
             init_text = _governance_init(archive)
             assert "CFOAnalyticsEngine" in init_text
             assert "EvidencePackGenerator" in init_text

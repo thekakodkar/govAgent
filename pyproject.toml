@@ -24,6 +24,10 @@ classifiers = [
 packages = [
     { include = "govagent", from = "src" }
 ]
+include = [
+    { path = "src/govagent/py.typed", format = ["sdist", "wheel"] },
+    { path = "src/govagent/compliance/*.yaml", format = ["sdist", "wheel"] },
+]
 
 # 🚀 CORE PRODUCTION DEPENDENCIES (Minimal Sovereign Footprint)
 [tool.poetry.dependencies]
@@ -46,12 +50,17 @@ crewai = { version = "^1.15.0", optional = true }
 langchain-core = { version = ">=0.1.0", optional = true }
 langchain-openai = { version = ">=0.1.0", optional = true }
 openai = { version = "*", optional = true }
+anthropic = { version = "*", optional = true }
+mcp = { version = ">=1.0.0", optional = true }
 sentence-transformers = { version = "^5.6.0", optional = true } # Optional to ensure token-free local embedding modularity
 
 [tool.poetry.extras]
 crewai = ["crewai"]
 langchain = ["langchain-core", "langchain-openai", "openai"]
 enterprise = ["sentence-transformers"] # Bundles local out-of-band vector evaluations for IBM Bob MCP
+openai = ["openai"]
+anthropic = ["anthropic"]
+mcp = ["mcp"]
 
 # 🛠️ MODERN DEVELOPMENT GROUPS: Keeps sandbox & server frameworks separated from cloud builds
 [tool.poetry.group.dev.dependencies]
