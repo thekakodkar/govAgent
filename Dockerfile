@@ -15,6 +15,8 @@ RUN poetry config virtualenvs.create false \
     && poetry install --with dev --extras enterprise --no-interaction --no-ansi
 
 ENV PYTHONPATH=/app/src:/app
+# Required at runtime for the sandbox API. There is no default token.
+# ENV GOVAGENT_SECRET_TOKEN=
 EXPOSE 8000
 
 CMD ["poetry", "run", "uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8000"]

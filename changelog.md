@@ -4,8 +4,39 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ---
 
+## [Unreleased]
+
+### Behavior changes
+
+- **Policy schema:** `Policy` now projects `registry_alignment.allowed_tools` / `high_risk_tools` and `oversight` (including `oversight.judiciary` and `oversight.privacy.target_entities`) in addition to top-level `tools:` and `judiciary`. Top-level `tools:` and `judiciary` still win for keys they set. Official sample YAMLs such as `policies/finance_policy.yaml` therefore enforce their allow-list and mark `execute_financial_transaction` as high-risk (HITL). This is a behavior change for anyone who loaded those samples and expected an empty allow-list.
+- **Allow-list timing:** a non-empty allow-list is enforced in `ExecutiveAgent.perform_action` / `execute`. `Policy` no longer calls `registry.validate_against_policy` at load time, so a process-wide registry may hold tools used by other policies. The `registry.validate_against_policy` method is unchanged for callers that still want the load-time check.
+- **Tool dispatch:** `ExecutiveAgent.perform_action` now resolves the registered callable through Harbor (`registry.verify_and_resolve_tool`) and invokes it. The previous stub string `Action {name} executed with params {params}` is no longer returned for registered tools; the return value is `str(result)`.
+- **Guards on the execute path:** `SemanticGuard` runs on the sanitized task and on tool thought; `CircuitBreaker.evaluate` also enforces `transaction_ceiling` / `max_per_transaction`. High-risk tools trigger HITL using `policy.judiciary_settings`.
+- **Privacy routing:** `PrivacyGuard.redact_task` sets `last_execution_had_pii`, so HYBRID `contains_pii` routing can fire. `anonymize()` is provided as an alias used by the IBM Bob proxy.
+- **Telemetry:** `TelemetryManager` writes a JSONL audit log to `logs/audit_trail.jsonl` by default (override with `GOVAGENT_AUDIT_LOG`, disable with `GOVAGENT_DISABLE_AUDIT_LOG=1` or `persist_jsonl=False`). Optional OpenTelemetry GenAI spans are emitted when `opentelemetry-api` is installed and `OTEL_SDK_DISABLED` is not set.
+- **Usage types:** `LLMResponse.raw_usage` accepts float values such as `estimated_cost_usd`. `LLMResponse.selected_model` is a compatibility alias of `model_name`. Execute metrics and the snapshot `selected_model` field use that name.
+- **Sandbox API:** `api/server.py` has no default bearer token (set `GOVAGENT_SECRET_TOKEN`) and the state and Slack callback routes require authentication.
+
+### Compatibility
+
+- `govagent.__version__` is exported from installed package metadata.
+- `ComplianceDossier.framework_version` defaults to that version instead of the literal `"3.0.0"` (the field can still be set explicitly).
+- `SemanticGuard` no longer crashes process startup when `sentence-transformers` is missing; install `govagent[enterprise]` to enable vector checks.
+- `post_session_cleanup` recognizes both `POLICY_AMENDMENT_PROPOSAL` and the previous plural typo.
+- The PyPI trove classifier is `Development Status :: 4 - Beta` (was Production/Stable).
+
+## [3.3.0] - 2026-11-13
+### Docs and package metadata only
+
+- Version string and library help page titled 3.3.0. No change to library source under `src/govagent/` relative to 3.1.0 behavior. This version was published to PyPI without a git tag.
+
+## [3.2.0] - 2026-11-13
+### Docs and package metadata only
+
+- Version string and README typography only. No change to library source under `src/govagent/` relative to 3.1.0 behavior. This version was published to PyPI without a git tag.
+
 ## [3.1.0] - 2026-11-05
-### Behavior changes (not yet published or tagged)
+### Behavior changes
 
 - **Policy projection:** `Policy` copies `fiscal_governance.global_limits` onto `global_limits`, including `recursive_tco_limit` as `recursive_tco_ceiling`, and copies `alignment` onto `policy.alignment`. A top-level `global_limits` key still wins for the keys it sets. `ExecutiveAgent`, `CircuitBreaker`, and `SemanticGuard` therefore enforce the ceilings and mission in `policies/*.yaml` without a platform-side patch. Documents that omit both the top-level and nested blocks keep the previous default daily budget of `10.0`.
 - **Public governance exports:** `govagent.governance` now exports `CFOAnalyticsEngine`, `EvidencePackGenerator`, and `ComplianceDossier` in addition to `MetaGovernor`. `EvidencePackGenerator.generate` still reads a JSONL buffer and is not tenant-aware.

@@ -1,5 +1,6 @@
 """Documentation stays aligned with the public API."""
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ def test_readme_does_not_advertise_removed_apis():
 def test_index_has_no_merge_markers_or_fictional_imports():
     page = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
     assert "<<<<<<<" not in page
-    assert "Governor" not in page
+    # Allow MetaGovernor (the real class) but reject a standalone fictional Governor symbol.
     assert "GuardrailBoundary" not in page
+    assert not re.search(r"(?<![A-Za-z])Governor(?![A-Za-z])", page)
     assert "from govagent import ExecutiveAgent, tool" in page or "ExecutiveAgent, tool" in page

@@ -1,15 +1,15 @@
 # src/govagent/hitl/__init__.py
 
-from .manager import HITLManager, ApprovalRequest, ApprovalStatus
 from .adapters import CLIAdapter, HITLAdapter
+from .manager import ApprovalRequest, ApprovalStatus, HITLManager
 from .slack_adapter import SlackJudiciaryAdapter
 
 # This allows: from govagent.hitl import HITLManager
 __all__ = [
-    "HITLManager", 
-    "SlackJudiciaryAdapter",
-    "ApprovalRequest", 
-    "ApprovalStatus", 
-    "CLIAdapter", 
-    "HITLAdapter"
+    "ApprovalRequest",
+    "ApprovalStatus",
+    "CLIAdapter",
+    "HITLAdapter",
+    "HITLManager",
+    "SlackJudiciaryAdapter"
 ]

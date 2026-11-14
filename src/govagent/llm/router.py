@@ -1,7 +1,9 @@
 import logging
 from enum import Enum
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
+
 from govagent.llm.base import BaseLLMClient, LLMRequest, LLMResponse
 
 logger = logging.getLogger("govagent.llm.router")
@@ -19,14 +21,14 @@ class RoutingRule(BaseModel):
 class RouterConfig(BaseModel):
     routing_mode: RoutingMode = RoutingMode.LOCAL_ONLY  # Defensively default to most secure
     default_provider: str
-    rules: List[RoutingRule] = Field(default_factory=list)
+    rules: list[RoutingRule] = Field(default_factory=list)
 
 class PolicyBasedRouter:
     """
     Environmental Traffic Cop. Adapts dynamically to isolated on-prem, 
     pure-cloud SaaS, or complex hybrid enterprise architectures with explicit failover handling.
     """
-    def __init__(self, clients: Dict[str, BaseLLMClient], config: RouterConfig):
+    def __init__(self, clients: dict[str, BaseLLMClient], config: RouterConfig):
         self.clients = clients
         self.config = config
         
@@ -38,7 +40,7 @@ class PolicyBasedRouter:
                 f"Available clients: {list(self.clients.keys())}"
             )
 
-    def determine_target(self, context_metadata: Dict[str, Any]) -> str:
+    def determine_target(self, context_metadata: dict[str, Any]) -> str:
         # Enforce structural environment containment first
         if self.config.routing_mode == RoutingMode.LOCAL_ONLY:
             return self.config.default_provider
@@ -65,7 +67,7 @@ class PolicyBasedRouter:
                         
         return self.config.default_provider
 
-    async def route_and_generate(self, request: LLMRequest, context_metadata: Dict[str, Any]) -> LLMResponse:
+    async def route_and_generate(self, request: LLMRequest, context_metadata: dict[str, Any]) -> LLMResponse:
         target_provider = self.determine_target(context_metadata)
         selected_client = self.clients[target_provider]
         return await selected_client.generate(request)

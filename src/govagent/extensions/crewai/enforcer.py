@@ -1,21 +1,23 @@
-import functools
-import yaml
-import time
-import sys
 import asyncio
-from typing import Any, Dict, Optional, List
-from crewai import Crew, Agent
+import functools
+import sys
+import time
+from typing import Any
+
+import yaml
+from crewai import Agent, Crew
 from crewai.llm import LLM
 
+from govagent.context.fiscal_ledger import get_shared_fiscal_metrics, update_shared_spend
+from govagent.guards.privacy import PrivacyGuard
+
 # 100% Core Infrastructure Integration
-from govagent.llm.base import LLMRequest, LLMResponse
+from govagent.llm.base import BaseLLMClient, LLMRequest, LLMResponse
 from govagent.llm.ollama import OllamaClient
 from govagent.llm.router import PolicyBasedRouter, RouterConfig, RoutingMode
-from govagent.guards.privacy import PrivacyGuard  
-from govagent.context.fiscal_ledger import get_shared_fiscal_metrics, update_shared_spend
-
 from govagent.registry import GlobalRegistry
 from govagent.telemetry.manager import TelemetryManager
+
 
 class GovAgentCrewAILLMBridge(LLM):
     """
@@ -34,7 +36,7 @@ class GovAgentCrewAILLMBridge(LLM):
         self.core_router = core_router
         self.model_name = model_name
 
-    def call(self, messages: List[Dict[str, str]], **kwargs) -> str:
+    def call(self, messages: list[dict[str, str]], **kwargs) -> str:
         """
         Intercepts CrewAI's generation call, packages it into an LLMRequest,
         and forces it down into the async core PolicyBasedRouter execution fabric.
@@ -44,7 +46,7 @@ class GovAgentCrewAILLMBridge(LLM):
         llm_request = LLMRequest(
             prompt=combined_prompt,
             temperature=kwargs.get("temperature", 0.0),
-            max_tokens=kwargs.get("max_tokens", None)
+            max_tokens=kwargs.get("max_tokens")
         )
         
         context_metadata = {
@@ -73,7 +75,7 @@ class GovAgentEnforcer:
     def __init__(self, crew: Crew, policy_path: str):
         self.crew = crew
         
-        with open(policy_path, "r", encoding="utf-8") as f:
+        with open(policy_path, encoding="utf-8") as f:
             self.raw_config = yaml.safe_load(f) or {}
             
         raw_mode = self.raw_config.get("routing_mode", "LOCAL_ONLY")
@@ -89,8 +91,9 @@ class GovAgentEnforcer:
         }
         core_ollama_instance = OllamaClient(config=ollama_config)
         
-        core_clients = {
-            self.raw_config.get("default_provider", "local_ollama"): core_ollama_instance,
+        default_provider = str(self.raw_config.get("default_provider", "local_ollama"))
+        core_clients: dict[str, BaseLLMClient] = {
+            default_provider: core_ollama_instance,
             "local_ollama": core_ollama_instance
         }
         
@@ -105,7 +108,7 @@ class GovAgentEnforcer:
         orig_execute_task = Agent.execute_task
 
         @functools.wraps(orig_execute_task)
-        def wrapped_execute_task(agent_self: Agent, task: Any, context: Optional[Any] = None, tools: Optional[Any] = None, *args, **kwargs):
+        def wrapped_execute_task(agent_self: Agent, task: Any, context: Any | None = None, tools: Any | None = None, *args, **kwargs):
             start_time = time.time()
             
             trace_id = getattr(task, "gov_trace_id", None)
@@ -119,7 +122,7 @@ class GovAgentEnforcer:
             
             try:
                 scrubbed_payload = self.privacy_guard.redact_task(raw_payload)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 import re
                 scrubbed_payload = re.sub(r'(?i)(password|passwd|secret|api_key|token)\s*=\s*[\'"][^\'"]+[\'"]', r'\1=[REDACTED]', raw_payload)
             
@@ -172,7 +175,7 @@ class GovAgentEnforcer:
                 
                 target_key = self.router.determine_target({"model_hint": model_name, "payload_length": len(scrubbed_payload)})
                 active_client = self.router.clients[target_key]
-                active_client.generate = mock_generate_fallback
+                object.__setattr__(active_client, "generate", mock_generate_fallback)
 
                 if hasattr(agent_self, "client") and agent_self.client:
                     object.__setattr__(agent_self, "client", None)
@@ -181,9 +184,9 @@ class GovAgentEnforcer:
                 execution_status = "SUCCESS"
                 update_shared_spend(0.0025)
                 
-            except Exception as execution_fault:
+            except Exception as execution_fault:  # noqa: BLE001
                 execution_status = "FAILOVER_ACTIVATED"
-                result = f"FALLBACK_METRICS: Secure recovery container active. Reason: {str(execution_fault)}"
+                result = f"FALLBACK_METRICS: Secure recovery container active. Reason: {execution_fault!s}"
 
             # --- TELEMETRY HYDRATION OUT-OF-BAND ---
             elapsed_time = time.time() - start_time

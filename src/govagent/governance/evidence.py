@@ -1,11 +1,14 @@
 # src/govagent/governance/evidence.py
 
-import json
 import hashlib
-from pathlib import Path
+import json
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any
+
 from pydantic import BaseModel, Field
+
+from govagent._version import __version__
 
 
 class Article9RiskMitigation(BaseModel):
@@ -17,11 +20,11 @@ class Article9RiskMitigation(BaseModel):
 
 class Article12TraceRecord(BaseModel):
     trace_id: str
-    parent_trace_id: Optional[str] = None
+    parent_trace_id: str | None = None
     timestamp: str
     model: str
     cost_usd: float
-    tool_manifest_hashes: List[str] = Field(default_factory=list)
+    tool_manifest_hashes: list[str] = Field(default_factory=list)
     state_verdict: str
 
 
@@ -34,7 +37,7 @@ class SignerRecord(BaseModel):
 class Article14OversightRecord(BaseModel):
     trace_id: str
     escalation_reason: str
-    signers: List[SignerRecord] = Field(default_factory=list)
+    signers: list[SignerRecord] = Field(default_factory=list)
     total_quorum_score: float
     required_quorum: float
     consensus_verdict: str
@@ -42,14 +45,14 @@ class Article14OversightRecord(BaseModel):
 
 
 class ComplianceDossier(BaseModel):
-    framework_version: str = "3.0.0"
+    framework_version: str = Field(default_factory=lambda: __version__)
     export_id: str
     generated_at: str
     system_anchor: str
     eu_ai_act_article_9: Article9RiskMitigation
-    eu_ai_act_article_12: List[Article12TraceRecord]
-    eu_ai_act_article_14: List[Article14OversightRecord]
-    dossier_sha256: Optional[str] = None
+    eu_ai_act_article_12: list[Article12TraceRecord]
+    eu_ai_act_article_14: list[Article14OversightRecord]
+    dossier_sha256: str | None = None
 
     def seal(self) -> str:
         """Computes an immutable cryptographic digest of the complete compliance dossier."""
@@ -61,7 +64,7 @@ class ComplianceDossier(BaseModel):
 class EvidencePackGenerator:
     """Aggregates forensic buffers into verified regulatory audit packs."""
 
-    def __init__(self, buffer_path: Optional[str] = None):
+    def __init__(self, buffer_path: str | None = None):
         if buffer_path:
             self.buffer_path = Path(buffer_path)
         else:
@@ -69,7 +72,7 @@ class EvidencePackGenerator:
             project_root = Path(__file__).resolve().parent.parent.parent.parent
             self.buffer_path = project_root / "logs" / "audit_buffer.jsonl"
 
-    def _parse_signatures(self, raw_signatures: List[Any]) -> List[SignerRecord]:
+    def _parse_signatures(self, raw_signatures: list[Any]) -> list[SignerRecord]:
         parsed = []
         for sig in raw_signatures:
             if isinstance(sig, str) and "|" in sig:
@@ -87,9 +90,9 @@ class EvidencePackGenerator:
         return parsed
 
     def generate(self, system_anchor: str = "govagent-enterprise-mesh") -> ComplianceDossier:
-        records: List[Dict[str, Any]] = []
+        records: list[dict[str, Any]] = []
         if self.buffer_path.exists():
-            with open(self.buffer_path, "r", encoding="utf-8") as f:
+            with open(self.buffer_path, encoding="utf-8") as f:
                 for line in f:
                     line_str = line.strip()
                     if line_str:

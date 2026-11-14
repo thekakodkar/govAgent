@@ -4,9 +4,25 @@ import pytest
 from pydantic import ValidationError
 
 from govagent.agent import ExecutiveAgent
+from govagent.hitl import HITLManager
 from govagent.llm.base import LLMResponse
 from govagent.registry import registry, tool
 
+
+
+
+class _AutoApproveAdapter:
+    async def notify(self, request):
+        return True
+
+
+def _agent(policy, router):
+    return ExecutiveAgent(
+        persona="Director",
+        policy=policy,
+        router=router,
+        hitl_manager=HITLManager(adapter=_AutoApproveAdapter()),
+    )
 
 class _ScriptedRouter:
     def __init__(self, amount):
@@ -33,11 +49,7 @@ def legislated_payment():
 
 @pytest.mark.asyncio
 async def test_invalid_amount_is_blocked_not_error(sovereign_policy):
-    agent = ExecutiveAgent(
-        persona="Director",
-        policy=sovereign_policy,
-        router=_ScriptedRouter("invalid_amt"),
-    )
+    agent = _agent(sovereign_policy, _ScriptedRouter("invalid_amt"))
     result = await agent.execute("Pay an invoice")
     assert result.status == "blocked"
     assert "Schema Violation" in str(result.output)
@@ -55,7 +67,7 @@ async def test_legislated_amount_does_not_fail_on_validation_shape(sovereign_pol
                 model_name="scripted",
             )
 
-    agent = ExecutiveAgent(persona="Director", policy=sovereign_policy, router=Router())
+    agent = _agent(sovereign_policy, Router())
     result = await agent.execute("Pay an invoice")
     assert result.status != "error"
     assert result.status == "success"

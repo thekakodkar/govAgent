@@ -1,22 +1,23 @@
-from .agent import ExecutiveAgent
-from .policy import Policy
-from .registry import tool, registry
-from .context import get_current_agent
-
-# 🔌 Explicit absolute relative routing to the underlying sub-modules
 from govagent.llm.base import BaseLLMClient, LLMRequest, LLMResponse
 from govagent.llm.router import PolicyBasedRouter, RouterConfig, RoutingMode
 
+from ._version import __version__
+from .agent import ExecutiveAgent
+from .context import get_current_agent
+from .policy import Policy
+from .registry import registry, tool
+
 __all__ = [
-    "ExecutiveAgent", 
-    "Policy", 
-    "tool", 
-    "registry", 
-    "get_current_agent",
     "BaseLLMClient",
+    "ExecutiveAgent",
     "LLMRequest",
     "LLMResponse",
+    "Policy",
     "PolicyBasedRouter",
     "RouterConfig",
-    "RoutingMode"
+    "RoutingMode",
+    "__version__",
+    "get_current_agent",
+    "registry",
+    "tool",
 ]

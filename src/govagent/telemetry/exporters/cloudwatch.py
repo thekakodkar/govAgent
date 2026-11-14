@@ -1,8 +1,12 @@
+import contextlib
 import json
 import time
+from typing import Any
+
 import boto3
-from typing import Dict, Any
+
 from .base import BaseExporter
+
 
 class CloudWatchExporter(BaseExporter):
     """Forensic Exporter for AWS CloudWatch Logs."""
@@ -14,12 +18,10 @@ class CloudWatchExporter(BaseExporter):
 
     def _ensure_log_resources(self):
         """Ensures Institutional Log Groups exist."""
-        try:
+        with contextlib.suppress(self.client.exceptions.ResourceAlreadyExistsException):
             self.client.create_log_group(logGroupName=self.log_group)
-        except self.client.exceptions.ResourceAlreadyExistsException:
-            pass
 
-    async def export(self, snapshot_data: Dict[str, Any]) -> bool:
+    async def export(self, snapshot_data: dict[str, Any]) -> bool:
         """Streams telemetry to AWS SOC."""
         try:
             self.client.put_log_events(
@@ -31,6 +33,6 @@ class CloudWatchExporter(BaseExporter):
                 }]
             )
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️ CloudWatch Export Failed: {e}")
             return False

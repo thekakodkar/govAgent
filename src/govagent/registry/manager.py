@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 # src/govagent/registry/manager.py
 import functools
 import logging
-from typing import Dict, Callable, Any, List
-from govagent.registry.schemas import FinancialTransactionIntent, ToolManifest
-from govagent.registry.harbor_verifier import HarborVerifier
+from collections.abc import Callable
+from typing import Any
+
 from govagent.guards.circuit_breaker import GovernanceViolation
+from govagent.registry.harbor_verifier import HarborVerifier
+from govagent.registry.schemas import FinancialTransactionIntent, ToolManifest
 
 logger = logging.getLogger("govagent.registry.manager")
 
-def verify_tool_record(tools: Dict[str, Any], harbor: HarborVerifier, tool_name: str) -> Callable:
+def verify_tool_record(tools: dict[str, Any], harbor: HarborVerifier, tool_name: str) -> Callable:
     """Harbor gate shared by the public registry facade and this singleton."""
     if tool_name not in tools:
         raise GovernanceViolation(f"REGISTRY EXCEPTION: Tool '{tool_name}' is not authorized.")
@@ -35,16 +39,19 @@ class GlobalRegistry:
     ``from govagent.registry.manager import GlobalRegistry, tool`` remains supported.
     New callers should use ``from govagent import tool, registry``.
     """
-    _instance = None
+
+    _instance: GlobalRegistry | None = None
+    tools: dict[str, Any]
+    harbor: HarborVerifier
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(GlobalRegistry, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance.tools = {}
             cls._instance.harbor = HarborVerifier()
         return cls._instance
 
-    def register_tool(self, func: Callable, manifest: ToolManifest, schema: Any = None, risk_level: str = None):
+    def register_tool(self, func: Callable, manifest: ToolManifest, schema: Any = None, risk_level: str | None = None):
         """Legislates a function into the sovereign manifest."""
         self.tools[manifest.name] = {
             "func": func,
@@ -58,16 +65,16 @@ class GlobalRegistry:
         """STAGE 5: Intercepts tools to run out-of-band Harbor OCI container verification."""
         return verify_tool_record(self.tools, self.harbor, tool_name)
 
-    def validate_against_policy(self, allowed_tools: List[str]) -> bool:
+    def validate_against_policy(self, allowed_tools: list[str]) -> bool:
         """Reject tools that are registered but absent from a non-empty allow list."""
-        for tool_name in self.tools.keys():
+        for tool_name in self.tools:
             if allowed_tools and tool_name not in allowed_tools:
                 raise PermissionError(
                     f"🛑 UNAUTHORIZED TOOL DETECTED: '{tool_name}' violates policy boundary."
                 )
         return True
 
-    def validate_intent_schema(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_intent_schema(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Return a dict result. Invalid amounts and schemas raise."""
         if arguments is None:
             arguments = {}
@@ -83,14 +90,14 @@ class GlobalRegistry:
         elif isinstance(arguments, dict) and "amount" in arguments:
             try:
                 float(arguments["amount"])
-            except (ValueError, TypeError):
-                raise ValueError("Institutional Integrity Failure: 'amount' must be numeric.")
+            except (ValueError, TypeError) as exc:
+                raise ValueError("Institutional Integrity Failure: 'amount' must be numeric.") from exc
 
         if entry is None:
             return {"valid": False, "error": "Tool not legislated"}
         return {"valid": True, "status": "AUTHORIZED"}
 
-def tool(name: str = None, description: str = None, risk_level: str = "low", oci_repository: str = None, artifact_digest: str = None, schema: Any = None):
+def tool(name: str | None = None, description: str | None = None, risk_level: str = "low", oci_repository: str | None = None, artifact_digest: str | None = None, schema: Any = None):
     """Sovereign Decorator: Intercepts and registers institutional actions with OCI scopes."""
     def decorator(func):
         registry_instance = GlobalRegistry()

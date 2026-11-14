@@ -1,9 +1,11 @@
 import os
-import json
-from azure.monitor.ingestion import LogsIngestionClient
+from typing import Any
+
 from azure.identity import DefaultAzureCredential
+from azure.monitor.ingestion import LogsIngestionClient
+
 from .base import BaseExporter
-from typing import Dict, Any
+
 
 class AzureMonitorExporter(BaseExporter):
     """Forensic Exporter for Azure Log Analytics."""
@@ -14,17 +16,17 @@ class AzureMonitorExporter(BaseExporter):
         self.stream_name = os.environ.get("LOGS_DCR_STREAM_NAME")
         
         self.credential = DefaultAzureCredential()
-        self.client = LogsIngestionClient(endpoint=self.endpoint, credential=self.credential)
+        self.client = LogsIngestionClient(endpoint=self.endpoint or "", credential=self.credential)
 
-    async def export(self, snapshot_data: Dict[str, Any]) -> bool:
+    async def export(self, snapshot_data: dict[str, Any]) -> bool:
         """Streams telemetry to Azure Monitor."""
         try:
             self.client.upload(
-                rule_id=self.rule_id,
-                stream_name=self.stream_name,
+                rule_id=self.rule_id or "",
+                stream_name=self.stream_name or "",
                 logs=[snapshot_data]
             )
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"⚠️ Azure Monitor Export Failed: {e}")
             return False

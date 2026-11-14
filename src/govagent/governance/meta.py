@@ -1,8 +1,9 @@
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Any
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("govagent.governance.meta")
@@ -33,7 +34,7 @@ class MetaGovernor:
         self.log_path = Path(log_path)
         self.friction_threshold = friction_threshold
 
-    def analyze_friction(self) -> Dict[str, Any]:
+    def analyze_friction(self) -> dict[str, Any]:
         """
         Scans the active audit log ledger for Recursive TCO block signatures.
         """
@@ -44,19 +45,20 @@ class MetaGovernor:
         rejections = []
         try:
             # Enforce strict UTF-8 boundaries during stream reads to ensure Windows environment safety
-            with open(self.log_path, "r", encoding="utf-8") as f:
+            with open(self.log_path, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
                     entry = json.loads(line)
                     
                     status_str = entry.get("status", "").upper()
-                    if "REJECT" in status_str or "BLOCKED" in status_str:
-                        if "TCO" in status_str or "FISCAL" in status_str:
-                            rejections.append(entry)
-        except Exception as e:
-            logger.error(f"MetaGovernor: Fatal ledger ingestion error: {str(e)}")
-            return {"status": "ERROR", "reason": f"Audit ingestion fault: {str(e)}"}
+                    if ("REJECT" in status_str or "BLOCKED" in status_str) and (
+                        "TCO" in status_str or "FISCAL" in status_str
+                    ):
+                        rejections.append(entry)
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"MetaGovernor: Fatal ledger ingestion error: {e!s}")
+            return {"status": "ERROR", "reason": f"Audit ingestion fault: {e!s}"}
 
         if len(rejections) >= self.friction_threshold:
             logger.warning(f"MetaGovernor: Systemic friction threshold breached ({len(rejections)} blocks detected). Generating legislation.")
@@ -68,7 +70,7 @@ class MetaGovernor:
             "reason": f"Friction levels within tolerance ({len(rejections)} / {self.friction_threshold} blocks recorded)."
         }
 
-    def _draft_amendment(self, rejections: List[Dict]) -> PolicyAmendmentProposal:
+    def _draft_amendment(self, rejections: list[dict]) -> PolicyAmendmentProposal:
         """
         Compiles structural log traces to craft a precise policy update proposal.
         """

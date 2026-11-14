@@ -93,17 +93,25 @@ def test_api_slack_polling_synchronization_lifecycle():
     trace_id = eval_data["trace_id"]
     
     # 2. Check volatile runtime memory via state register endpoint
-    state_res = client.get(f"/api/v1/governance/state/{trace_id}")
+    state_res = client.get(f"/api/v1/governance/state/{trace_id}", headers=AUTH_HEADERS)
     assert state_res.status_code == 200
     assert state_res.json()["status"] == "PENDING"
     
     # 3. Mock the out-of-band interactive approval callback from Slack
     callback_res = client.get(
         "/api/v1/slack/callback",
+        headers=AUTH_HEADERS,
         params={"trace_id": trace_id, "decision": "approved"}
     )
     assert callback_res.status_code == 200
     
     # 4. Re-verify runtime register to confirm status has cleanly flipped to APPROVED
-    updated_state_res = client.get(f"/api/v1/governance/state/{trace_id}")
+    updated_state_res = client.get(f"/api/v1/governance/state/{trace_id}", headers=AUTH_HEADERS)
     assert updated_state_res.json()["status"] == "APPROVED"
+
+
+def test_state_and_slack_callback_require_auth():
+    denied = client.get("/api/v1/governance/state/TR-TEST")
+    assert denied.status_code == 401
+    denied_cb = client.get("/api/v1/slack/callback", params={"trace_id": "TR-TEST", "decision": "approved"})
+    assert denied_cb.status_code == 401

@@ -1,56 +1,84 @@
-from typing import Dict, Any, List
+from __future__ import annotations
+
+from typing import Any
+
 from govagent.context import get_shared_fiscal_metrics
-from .semantic import SemanticGuard
+
 from .privacy import PrivacyGuard
+from .semantic import SemanticGuard
+
 
 class GovernanceViolation(Exception):
     """Institutional Exception raised on policy breach."""
-    pass
+
 
 class CircuitBreaker:
     """
-    The Enforcement Layer of the Control Plane (v0.5.0).
-    Ensures absolute fiscal sovereignty over multi-agent swarms.
+    The Enforcement Layer of the Control Plane.
+    Fiscal, per-transaction, and semantic sovereignty checks.
     """
-    def __init__(self, policy, semantic_guard: SemanticGuard):
+
+    def __init__(self, policy: Any, semantic_guard: SemanticGuard | None = None):
         self.policy = policy
         self.semantic_guard = semantic_guard
         self.privacy = PrivacyGuard(policy)
 
-    def check_financial_risk(self, local_projected_cost: float):
-        """
-        Hardened Fiscal Gate: Evaluates total swarm liability.
-        Aggregates shared institutional spend with the local action cost.
-        """
-        # 1. RETRIEVE GLOBAL STATE
-        # Access the shared ledger to determine current swarm-wide spend.
+    def _limits(self) -> dict[str, Any]:
+        limits = getattr(self.policy, "global_limits", {}) or {}
+        if not limits and hasattr(self.policy, "config"):
+            limits = self.policy.config.get("global_limits", {}) or {}
+        return limits
+
+    def check_financial_risk(self, local_projected_cost: float) -> None:
+        """Hardened fiscal gate over aggregate swarm spend plus the local action cost."""
         metrics = get_shared_fiscal_metrics()
         total_projected_cost = metrics["cumulative_spend"] + local_projected_cost
 
-        # 2. EXTRACT LEGISLATED LIMITS
-        # Pull thresholds from global_limits. We enforce the most conservative 
-        # ceiling to ensure absolute ROI protection.
-        # Using getattr to handle variations in the Policy object structure.
-        limits = getattr(self.policy, 'global_limits', {})
-        if not limits and hasattr(self.policy, 'config'):
-            limits = self.policy.config.get('global_limits', {})
-            
-        tco_limit = limits.get("recursive_tco_ceiling", 150.0) 
+        limits = self._limits()
+        tco_limit = limits.get("recursive_tco_ceiling", 150.0)
         daily_limit = limits.get("daily_budget_usd", 100.0)
-        
-        effective_limit = min(tco_limit, daily_limit)
-        
-        # 3. EVALUATE BREACH
-        # Resolves test failure by blocking the $110.00 projected total.
+        effective_limit = min(float(tco_limit), float(daily_limit))
+
         if total_projected_cost > effective_limit:
             raise GovernanceViolation(
                 f"RECURSIVE TCO REJECT: Projected swarm spend ${total_projected_cost:.2f} "
                 f"exceeds the institutional limit of ${effective_limit:.2f}."
             )
 
-    async def evaluate(self, tool_name: str, args: Dict[str, Any], thought: str = ""):
-        """v0.5.0 Standard: Three-Stage Sovereignty Check."""
-        # ... (Stage 1 & 3 logic remains aligned) ...
-        projected = args.get("amount", 0.0)
-        self.check_financial_risk(projected)
+    def check_transaction_limit(self, amount: float) -> None:
+        """Enforce per-transaction ceilings when the policy defines them."""
+        limits = self._limits()
+        caps = [
+            limits.get("transaction_ceiling"),
+            limits.get("max_per_transaction"),
+        ]
+        numeric_caps = [float(cap) for cap in caps if cap is not None]
+        if not numeric_caps:
+            return
+        ceiling = min(numeric_caps)
+        if float(amount) > ceiling:
+            raise GovernanceViolation(
+                f"TRANSACTION CEILING REJECT: Requested amount ${float(amount):.2f} "
+                f"exceeds the per-transaction limit of ${ceiling:.2f}."
+            )
+
+    def check_semantic_alignment(self, thought: str) -> None:
+        if not self.semantic_guard or not thought or not str(thought).strip():
+            return
+        score = self.semantic_guard.evaluate_alignment(thought)
+        if score == 0.0:
+            raise GovernanceViolation(
+                "SEMANTIC ALIGNMENT BREACH: Reasoning or input matched a prohibited strategy."
+            )
+
+    async def evaluate(self, tool_name: str, args: dict[str, Any], thought: str = "") -> bool:
+        """Three-stage check: semantic alignment, per-transaction cap, then fiscal TCO."""
+        self.check_semantic_alignment(thought)
+        projected = args.get("amount", 0.0) or 0.0
+        try:
+            projected_value = float(projected)
+        except (TypeError, ValueError):
+            projected_value = 0.0
+        self.check_transaction_limit(projected_value)
+        self.check_financial_risk(projected_value)
         return True

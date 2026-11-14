@@ -17,6 +17,7 @@ load_dotenv(dotenv_path=os.path.join(base_directory, ".env"))
 
 logger = logging.getLogger("govagent.api")
 
+from govagent import __version__
 from govagent.agent import ExecutiveAgent
 from govagent.policy import Policy
 from govagent.guards.circuit_breaker import GovernanceViolation
@@ -32,7 +33,7 @@ from govagent.governance.cfo_analytics import CFOAnalyticsEngine
 from govagent.registry.schemas import ExecutionSnapshot
 from govagent.hitl.slack_adapter import SlackJudiciaryAdapter
 
-app = FastAPI(title="govAgent Enterprise Governance Plane", version="3.0.0")
+app = FastAPI(title="govAgent Enterprise Governance Plane", version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_TOKEN = os.environ.get("GOVAGENT_SECRET_TOKEN", "gov-secret-key-100x")
+# No default secret. Set GOVAGENT_SECRET_TOKEN before serving this sandbox.
+API_TOKEN = os.environ.get("GOVAGENT_SECRET_TOKEN") or ""
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
 LIVE_TRANSACTION_STATES: Dict[str, Dict[str, Any]] = {}
 
@@ -80,7 +82,7 @@ class PolicySummary(BaseModel):
     raw_content: Dict[str, Any]
 
 def verify_auth(authorization: Optional[str] = Header(None)):
-    if not authorization or authorization != f"Bearer {API_TOKEN}":
+    if not API_TOKEN or not authorization or authorization != f"Bearer {API_TOKEN}":
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid Token.")
 
 def extract_policy_cap(policy_instance: Any, raw_dict: Dict[str, Any]) -> float:
@@ -222,13 +224,13 @@ async def list_policies():
 
     return inventory
 
-@app.get("/api/v1/governance/state/{trace_id}")
+@app.get("/api/v1/governance/state/{trace_id}", dependencies=[Depends(verify_auth)])
 async def get_transaction_state(trace_id: str):
     if trace_id in LIVE_TRANSACTION_STATES:
         return LIVE_TRANSACTION_STATES[trace_id]
     return {"status": "PENDING", "message": "Awaiting infrastructure telemetry tokens."}
 
-@app.get("/api/v1/slack/callback")
+@app.get("/api/v1/slack/callback", dependencies=[Depends(verify_auth)])
 async def slack_webhook_callback(trace_id: str = Query(...), decision: str = Query(...)):
     target_state = "APPROVED" if decision.lower() in ["approved", "approve"] else "VETOED"
     if trace_id not in LIVE_TRANSACTION_STATES:

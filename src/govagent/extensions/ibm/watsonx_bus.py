@@ -1,6 +1,7 @@
 # src/govagent/extensions/ibm/watsonx_bus.py
 import logging
-from typing import Dict, Any
+from typing import Any
+
 from govagent.context.fiscal_ledger import update_shared_spend
 
 logger = logging.getLogger("govagent.extensions.ibm.watsonx_bus")
@@ -13,7 +14,7 @@ class WatsonxOrchestrateBusSync:
     def __init__(self, fallback_rate_per_token: float = 0.00002):
         self.fallback_rate = fallback_rate_per_token
 
-    def process_watsonx_generation_metric(self, response_payload: Dict[str, Any]) -> float:
+    def process_watsonx_generation_metric(self, response_payload: dict[str, Any]) -> float:
         """
         Extracts token usage metrics from standard watsonx/IBM Granite execution tokens 
         and updates the global atomic fiscal ledger snapshot.

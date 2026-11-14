@@ -1,8 +1,9 @@
-from enum import Enum
-from typing import Optional, Any, Set, List, Dict
-from pydantic import BaseModel, Field
-import uuid
 import logging
+import uuid
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("govagent.hitl.manager")
 
@@ -23,8 +24,8 @@ class ApprovalRequest(BaseModel):
     min_approvals: int = 1         # Maintained for v0.5.1 simple threshold fallback
     required_score: float = 1.0    # Target accumulated role weight threshold
     risk_tier: str = "TIER_1_OPERATIONAL"
-    approvers: Set[str] = Field(default_factory=set)  # Format: "user_id|role|weight"
-    message_ts: Optional[str] = None 
+    approvers: set[str] = Field(default_factory=set)  # Format: "user_id|role|weight"
+    message_ts: str | None = None 
 
 class HITLManager:
     """
@@ -49,9 +50,9 @@ class HITLManager:
         self, 
         agent_id: str, 
         reason: str, 
-        context: dict = None, 
+        context: dict | None = None, 
         triggered_by: str = "policy", 
-        config: dict = None            
+        config: dict | None = None            
     ) -> bool:
         """
         Orchestrates the asynchronous evaluation process against an escalating risk matrix.

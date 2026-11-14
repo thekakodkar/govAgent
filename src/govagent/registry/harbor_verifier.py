@@ -1,7 +1,7 @@
 # src/govagent/registry/harbor_verifier.py
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -19,13 +19,14 @@ class HarborVerifier:
     the artifact is signed and free of high or critical vulnerabilities.
     """
 
-    def __init__(self, registry_url: str = None, robot_token: str = None, client: Optional[httpx.Client] = None):
-        self.registry_url = (registry_url or os.getenv("HARBOR_REGISTRY_URL", "https://harbor.local")).rstrip("/")
+    def __init__(self, registry_url: str | None = None, robot_token: str | None = None, client: httpx.Client | None = None):
+        url = registry_url or os.getenv("HARBOR_REGISTRY_URL") or "https://harbor.local"
+        self.registry_url = url.rstrip("/")
         self.robot_token = robot_token if robot_token is not None else os.getenv("HARBOR_ROBOT_TOKEN", "mock-token")
         self.robot_name = os.getenv("HARBOR_ROBOT_NAME", "robot")
         self._client = client
 
-    def verify_tool_artifact(self, repository: str, artifact_digest: str) -> Dict[str, Any]:
+    def verify_tool_artifact(self, repository: str, artifact_digest: str) -> dict[str, Any]:
         """Queries Harbor security definitions to validate container status."""
         logger.info(f"⚓ Harbor Verifier: Scanning supply chain for {repository}@{artifact_digest}...")
         if self._offline_stub():
@@ -92,7 +93,7 @@ class HarborVerifier:
         token = (self.robot_token or "").strip().lower()
         return token in _MOCK_TOKENS or token.startswith("mock-")
 
-    def _stub_report(self, repository: str) -> Dict[str, Any]:
+    def _stub_report(self, repository: str) -> dict[str, Any]:
         if "malicious" in repository:
             return {
                 "verified": False,
@@ -125,7 +126,7 @@ def _split_repository(repository: str) -> tuple[str, str]:
     return project, repo
 
 
-def _has_blocking_vulnerability(body: Dict[str, Any]) -> bool:
+def _has_blocking_vulnerability(body: dict[str, Any]) -> bool:
     overview = body.get("scan_overview") or {}
     if not isinstance(overview, dict):
         return False
@@ -143,7 +144,7 @@ def _has_blocking_vulnerability(body: Dict[str, Any]) -> bool:
     return False
 
 
-def _scan_is_clean(body: Dict[str, Any]) -> bool:
+def _scan_is_clean(body: dict[str, Any]) -> bool:
     overview = body.get("scan_overview") or {}
     if not isinstance(overview, dict) or not overview:
         return False
@@ -153,7 +154,7 @@ def _scan_is_clean(body: Dict[str, Any]) -> bool:
     return False
 
 
-def _is_signed(body: Dict[str, Any]) -> bool:
+def _is_signed(body: dict[str, Any]) -> bool:
     for accessory in body.get("accessories") or []:
         if not isinstance(accessory, dict):
             continue

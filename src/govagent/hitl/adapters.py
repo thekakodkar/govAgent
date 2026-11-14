@@ -1,5 +1,7 @@
 from typing import Protocol
+
 from .manager import ApprovalRequest  # Relative import for the package structure
+
 
 class HITLAdapter(Protocol):
     """Protocol for different notification channels (CLI, Slack, Teams)."""
@@ -9,7 +11,7 @@ class HITLAdapter(Protocol):
 class CLIAdapter:
     """Standard Console Adapter for local development."""
     async def notify(self, request: ApprovalRequest) -> bool:
-        print(f"\n--- 🛑 GOVAGENT INTERVENTION REQUIRED ---")
+        print("\n--- 🛑 GOVAGENT INTERVENTION REQUIRED ---")
         print(f"ID: {request.request_id}")
         print(f"Reason: {request.reason}")
         

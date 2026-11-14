@@ -1,7 +1,8 @@
 # src/govagent/governance/cfo_analytics.py
-from typing import Dict, List, Any
-from pydantic import BaseModel, Field
 import datetime
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class CostCenterAllocation(BaseModel):
@@ -17,14 +18,14 @@ class CFORiskReport(BaseModel):
     value_at_risk_prevented_usd: float = 0.0
     burn_rate_anomaly_detected: bool = False
     average_cost_per_work_unit: float = 0.0
-    allocations_by_center: Dict[str, CostCenterAllocation] = Field(default_factory=dict)
+    allocations_by_center: dict[str, CostCenterAllocation] = Field(default_factory=dict)
     generated_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
 
 class CFOAnalyticsEngine:
     def __init__(self):
-        self.snapshots: List[Any] = []
-        self.allocations: Dict[str, CostCenterAllocation] = {}
+        self.snapshots: list[Any] = []
+        self.allocations: dict[str, CostCenterAllocation] = {}
 
     def record_execution(self, snapshot: Any) -> None:
         """Primary ingestion entrypoint for execution snapshots."""

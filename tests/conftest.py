@@ -1,21 +1,23 @@
-import pytest
-from govagent.policy import Policy
-from govagent.context import reset_fiscal_ledger
-
 import os
 
-# Disable CrewAI telemetry to prevent network hang and timeouts
-os.environ["CREWAI_TELEMETRY_OPT_OUT"] = "true"
-os.environ["OTEL_SDK_DISABLED"] = "true"
+# Test defaults: do not write a process-wide audit log, and provide a sandbox API token.
+os.environ.setdefault("CREWAI_TELEMETRY_OPT_OUT", "true")
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+os.environ.setdefault("GOVAGENT_DISABLE_AUDIT_LOG", "true")
+os.environ.setdefault("GOVAGENT_SECRET_TOKEN", "gov-secret-key-100x")
 
+import pytest
+
+from govagent.context import reset_fiscal_ledger
 from govagent.policy import Policy
-# ... keep the rest of your conftest fixtures
+
 
 @pytest.fixture(autouse=True)
 def clean_institutional_state():
     """Automatically resets the ledger before every test to prevent spend leakage."""
     reset_fiscal_ledger()
     yield
+
 
 @pytest.fixture
 def v6_policy_config():
@@ -38,9 +40,11 @@ def v6_policy_config():
         }
     }
 
+
 @pytest.fixture
 def sovereign_policy(v6_policy_config):
     return Policy(v6_policy_config)
+
 
 def mock_audit_ledger(tmp_path):
     """

@@ -48,3 +48,19 @@ def test_watsonx_orchestrate_bus_spend_sync():
     metrics = get_shared_fiscal_metrics()
     assert metrics["cumulative_spend"] == 0.02
     assert metrics["task_counter"] == 1.0
+
+@pytest.mark.asyncio
+async def test_ibm_bob_mcp_proxy_uses_privacy_redact_task():
+    from govagent.guards.privacy import PrivacyGuard
+    from govagent.policy import Policy
+
+    guard = PrivacyGuard(Policy({"metadata": {"agent_name": "P"}}))
+    proxy = BobMCPProxyGateway(privacy_guard=guard)
+
+    def sample_tool(note: str):
+        return "ok"
+
+    governed = proxy.govern_mcp_tool("note_tool", sample_tool)
+    result = await governed(note="Contact Jane Doe at 123 Main St")
+    assert result == "ok"
+    assert guard.last_execution_had_pii is True

@@ -1,11 +1,13 @@
 import asyncio
 import logging
-from typing import Dict, List, Any, Tuple
-from slack_sdk.web import WebClient
+from typing import Any
+
 from slack_sdk.socket_mode import SocketModeClient
-from slack_sdk.socket_mode.response import SocketModeResponse
 from slack_sdk.socket_mode.request import SocketModeRequest
-from .manager import ApprovalRequest, ApprovalStatus
+from slack_sdk.socket_mode.response import SocketModeResponse
+from slack_sdk.web import WebClient
+
+from .manager import ApprovalRequest
 
 logger = logging.getLogger("govagent.hitl.slack_adapter")
 
@@ -14,11 +16,11 @@ class SlackJudiciaryAdapter:
     Refactored Institutional Multi-Signature Adapter (v0.6.0).
     Manages user interface delivery and maps user inputs to structured voting vectors.
     """
-    def __init__(self, bot_token: str, app_token: str, channel_id: str):
+    def __init__(self, bot_token: str | None = None, app_token: str | None = None, channel_id: str = ""):
         self.channel_id = channel_id
-        self.client = WebClient(token=bot_token)
-        self.pending_requests: Dict[str, Tuple[ApprovalRequest, asyncio.Future]] = {}
-        self.socket_client = SocketModeClient(app_token=app_token, web_client=self.client)
+        self.client = WebClient(token=bot_token or "")
+        self.pending_requests: dict[str, tuple[ApprovalRequest, asyncio.Future]] = {}
+        self.socket_client = SocketModeClient(app_token=app_token or "", web_client=self.client)
         
         # Mirror weights purely for real-time local display calculations
         self.voter_weights = {
@@ -32,7 +34,7 @@ class SlackJudiciaryAdapter:
     def start(self) -> None:
         """Establishes the persistent WebSocket connection thread."""
         logger.info("🏛️ Judiciary Layer: Initializing Real-time Socket Mode listener...")
-        self.socket_client.socket_mode_request_listeners.append(self.handle_interaction)
+        self.socket_client.socket_mode_request_listeners.append(self.handle_interaction)  # type: ignore[arg-type]
         self.socket_client.connect()
 
     def stop(self) -> None:
@@ -40,7 +42,7 @@ class SlackJudiciaryAdapter:
         logger.info("🏛️ Judiciary Layer: Severing Socket Mode connection...")
         self.socket_client.disconnect()
 
-    async def notify(self, request: ApprovalRequest) -> List[Dict[str, Any]]:
+    async def notify(self, request: ApprovalRequest) -> list[dict[str, Any]]:
         """
         Dispatches the ballot layout and pauses core thread execution 
         until the required score signature array is compiled.
@@ -66,7 +68,7 @@ class SlackJudiciaryAdapter:
             if request.request_id in self.pending_requests:
                 del self.pending_requests[request.request_id]
 
-    def _generate_blocks(self, request: ApprovalRequest) -> List[Dict[str, Any]]:
+    def _generate_blocks(self, request: ApprovalRequest) -> list[dict[str, Any]]:
         """Compiles standard Slack block layouts reflecting progressive weights."""
         approvers_display = []
         current_score = 0.0
@@ -133,7 +135,8 @@ class SlackJudiciaryAdapter:
 
     def handle_interaction(self, client: SocketModeClient, req: SocketModeRequest) -> None:
         """Processes interaction events across the distributed workspace board."""
-        if req.type != "interactive": return
+        if req.type != "interactive":
+            return
         
         payload = req.payload
         action = payload["actions"][0]["action_id"]

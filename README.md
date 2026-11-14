@@ -6,7 +6,7 @@
 
 govAgent is a lightweight, asynchronous enterprise control plane that hooks natively into multi-agent systems to inject **safety, accountability, observability, and deterministic fiscal control** into autonomous workflows.
 
-Most agent frameworks prioritize speed and raw capability paths. **govAgent** focuses on running them **predictably, securely, and safely** under corporate guardrails, fully aligned with strict global regulatory mandates like the **EU AI Act (Regulation 2024/1689)**.
+Most agent frameworks prioritize speed and raw capability paths. **govAgent** focuses on running them **predictably, securely, and safely** under corporate guardrails, designed to help deployers implement technical controls that map to parts of the **EU AI Act (Regulation 2024/1689)**. This is not a certification.
 
 ---
 
@@ -117,7 +117,7 @@ enforced_crew = GovAgentEnforcer(crew, policy_path="policies/sample_crewai_polic
 
 ### ⚡ 60-Second Quickstart: Institutional Sovereignty
 
-Achieve Article 12 and 14 compliance in three commands. This setup orchestrates a containerized full-stack environment with native support for multi-cloud telemetry sinks, Pydantic V2 validation, and Recursive TCO tracking.
+Stand up a local sandbox (not a compliance certification) in three commands. Set `GOVAGENT_SECRET_TOKEN`; there is no default API key. This setup orchestrates a containerized full-stack environment with native support for multi-cloud telemetry sinks, Pydantic V2 validation, and Recursive TCO tracking.
 
 #### 1. Configure the Environment
 Ensure your `.env` file is created in your root workspace directory and contains your API keys alongside your out-of-band Slack webhook credentials:
@@ -285,7 +285,7 @@ In an institutional setting, "State Management" is insufficient; you require Sov
 | **Tool Legislation** | ✅ **Global Registry Singleton** | ⚠️ Function Decorators | ❌ String-based Tools |
 | **Forensic Audit** | ✅ **Federated Cross-Org Trails** | ❌ Per-run only | ❌ Console Prints |
 | **Policy Calibration** | ✅ **Self-Healing Optimization** | ❌ Hardcoded Boundaries | ❌ Manual Intervention |
-| **Regulatory Status** | ✅ **EU AI Act Regulation Ready** | ❌ Experimental | ❌ Experimental |
+| **Regulatory Status** | ⚠️ **Beta controls; not a certification** | Varies | Varies |
 | **Native Swarm Extension** | **✅ Built-In crewAI Middleware Adapter** | ❌ Custom Rigging Required | ❌ None |
 | **Middleware Connectors** | ✅ **Native IBM Bob MCP & watsonx extension** | ❌ None | ❌ None |
 | **Supply Chain gating** | ✅ **Harbor OCI Registry Verifier** | ❌ None | ❌ None |

@@ -1,7 +1,9 @@
 import logging
-from typing import Dict, Any, List
-from pydantic import BaseModel, Field
 from datetime import datetime, timezone
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 from .base import BaseExporter
 
 logger = logging.getLogger("govagent.telemetry.exporters.federated")
@@ -19,7 +21,7 @@ class FederatedAuditPayload(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     )
     status: str
-    payload_digest: Dict[str, Any]
+    payload_digest: dict[str, Any]
 
 class FederatedTelemetryExporter(BaseExporter):
     """
@@ -28,16 +30,16 @@ class FederatedTelemetryExporter(BaseExporter):
     """
     def __init__(self):
         # Maps organization identifiers to their designated enterprise compliance destinations
-        self.registered_org_sinks: Dict[str, List[Dict[str, Any]]] = {}
+        self.registered_org_sinks: dict[str, list[dict[str, Any]]] = {}
 
-    def register_organization_sink(self, organization_id: str, sink_config: Dict[str, Any]) -> None:
+    def register_organization_sink(self, organization_id: str, sink_config: dict[str, Any]) -> None:
         """Enrolls an external corporate entity's log target into the governance plane."""
         if organization_id not in self.registered_org_sinks:
             self.registered_org_sinks[organization_id] = []
         self.registered_org_sinks[organization_id].append(sink_config)
         logger.info(f"FederatedTelemetryExporter: Connected compliance sink for Organization: '{organization_id}'")
 
-    async def export(self, snapshot_data: Dict[str, Any]) -> bool:
+    async def export(self, snapshot_data: dict[str, Any]) -> bool:
         """
         Processes standard contracts. Extracts organization scope variables, 
         wraps snapshots into audited payloads, and dispatches to specific destinations.
@@ -74,9 +76,11 @@ class FederatedTelemetryExporter(BaseExporter):
             try:
                 sink_type = sink.get("type", "CONSOLE")
                 # In production, this anchors to self.client web hooks or message queue sinks
-                logger.info(f"🚀 Cross-Org Engine: Routed trace {trace_id} to {sink_type} for Tenant [{org_id}]")
-            except Exception as e:
-                logger.error(f"FederatedTelemetryExporter: Transmission error on target sink: {str(e)}")
+                logger.info(
+                    f"🚀 Cross-Org Engine: Routed trace {audit_payload.trace_id} to {sink_type} for Tenant [{org_id}]"
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"FederatedTelemetryExporter: Transmission error on target sink: {e!s}")
                 dispatch_success = False
 
         return dispatch_success
