@@ -15,6 +15,9 @@ These changes are on `main` only. They are **not** part of the tagged PyPI relea
 - Packaged, machine-readable control mapping at `govagent.compliance.controls.yaml` (also loadable as JSON via `control_catalog_json()`). It maps EU AI Act Articles 9/12/14, ISO/IEC 42001 Annex A fragments, and NIST AI RMF functions to GovAgent features and evidence fields. `EvidencePackGenerator.generate` records `mapped_controls`, `control_mapping_version`, and a disclaimer on `ComplianceDossier`. This is **not** a certification or declaration of conformity.
 - Optional cloud model clients with tool-calling and usage/cost mapping onto `LLMResponse`: `OpenAIClient` and `AzureOpenAIClient` (`govagent[openai]`), and `AnthropicClient` (`govagent[anthropic]`).
 - `ExecutiveAgent.aexecute` is the explicit async execute loop. `execute` remains an awaitable wrapper (`return await self.aexecute(task)`), so existing `await agent.execute(...)` call sites are unchanged. Sync callers can use `asyncio.run(agent.aexecute(...))`.
+- Opt-in `live` tests for `OpenAIClient`, `AzureOpenAIClient`, `AnthropicClient` (skipped without the matching API keys) and a real `GovernedMCPGateway` session against a local official-SDK stdio MCP server (no keys required).
+- `SECURITY.md` (private reporting via GitHub Security Advisories, supported versions, response targets), `CONTRIBUTING.md`, `docs/VERSIONING.md` (SemVer; breaking changes only in majors after at least one minor deprecation window), and `docs/PUBLISHING.md` (Sigstore, SBOM, token upload, and how to switch PyPI to trusted publishing).
+- CI generates a CycloneDX SBOM on `main`. The `release` workflow signs wheels and sdists with Sigstore (GitHub OIDC) and attaches the SBOM and `.sigstore` bundles to the GitHub Release. Dependabot is enabled for `pip` and `github-actions`.
 
 ## [3.4.0] - 2026-11-14
 ### Behavior changes

@@ -29,16 +29,16 @@ jobs:
       matrix:
         include:
           - python-version: "3.10"
-            extras: "enterprise"
+            extras: "enterprise mcp"
             pytest_args: "--ignore=tests/test_crewai_adapter.py"
           - python-version: "3.11"
-            extras: "crewai enterprise"
+            extras: "crewai enterprise mcp"
             pytest_args: ""
           - python-version: "3.12"
-            extras: "crewai enterprise"
+            extras: "crewai enterprise mcp"
             pytest_args: ""
           - python-version: "3.13"
-            extras: "crewai enterprise"
+            extras: "crewai enterprise mcp"
             pytest_args: ""
     steps:
       - uses: actions/checkout@v4
@@ -56,3 +56,21 @@ jobs:
       - name: Wheel layout
         if: matrix.python-version == '3.12'
         run: poetry run pytest tests/test_wheel_layout.py -v --tb=short
+
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install package
+        run: poetry install --with dev --no-interaction --no-ansi
+      - name: Generate CycloneDX SBOM
+        run: poetry run cyclonedx-py poetry --mc-type library --of JSON -o govagent.cdx.json --output-reproducible
+      - uses: actions/upload-artifact@v4
+        with:
+          name: govagent-cyclonedx-sbom
+          path: govagent.cdx.json

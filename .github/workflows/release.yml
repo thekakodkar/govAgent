@@ -1,0 +1,67 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Poetry and release tools
+        run: pip install poetry cyclonedx-bom twine
+      - name: Build
+        run: poetry build
+      - name: Twine check
+        run: twine check dist/*
+      - name: Generate CycloneDX SBOM
+        run: |
+          poetry install --with dev --no-interaction --no-ansi
+          VERSION="$(poetry version -s)"
+          poetry run cyclonedx-py poetry --mc-type library --of JSON -o "dist/govagent-${VERSION}.cdx.json" --output-reproducible
+      - name: Sign artifacts with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
+        with:
+          inputs: |
+            ./dist/*.whl
+            ./dist/*.tar.gz
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          NOTES="$(python - <<'PY'
+          from pathlib import Path
+          import os, re
+          tag = os.environ["GITHUB_REF_NAME"]
+          version = tag.lstrip("v")
+          text = Path("changelog.md").read_text(encoding="utf-8")
+          pattern = rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|\Z)"
+          match = re.search(pattern, text, flags=re.M | re.S)
+          body = match.group(0).strip() if match else f"govagent {version}"
+          print(body)
+          PY
+          )"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --title "$TAG" --notes "$NOTES"
+          fi
+
+      # Uncomment after configuring a PyPI trusted publisher for this workflow
+      # (see docs/PUBLISHING.md). Do not enable this while token uploads are
+      # still the official path, or the project may be published twice.
+      # - name: Publish to PyPI (trusted publishing)
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     attestations: true
