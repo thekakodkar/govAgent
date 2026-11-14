@@ -63,10 +63,9 @@ Ideal for:
 
 ### 📡 Full-Stack Sandbox Architecture
 
-govAgent decouples its governance evaluation runtime from its user-facing operational views:
+govAgent is a Python library. A repo-local FastAPI sandbox (`api/server.py`) is provided for development; it is **not** included in the published wheel. Set `GOVAGENT_SECRET_TOKEN` before serving it — there is no default API key.
 
-* **FastAPI Gateway (`api/server.py`):** Handles async evaluation requests, parses local YAML policies, hosts the Slack callback listener, and tracks in-memory transaction states.
-* **Next.js Web Interface (`src/app/page.tsx`):** A clean, single-page dashboard featuring a **Live Audit Matrix** to watch execution status (`SUCCESS`, `PENDING`, `BLOCKED`), a **Legislative Rules Inspector**, and a live **Forensic Engine Log Stream** that updates via long-polling.
+* **FastAPI sandbox (`api/server.py`):** Handles evaluation requests, parses local YAML policies, hosts the Slack callback listener, and tracks in-memory transaction states.
 
 ---
 
@@ -188,7 +187,7 @@ GovAgent utilizes a highly modular package structure to enforce a strict "Separa
 
 **govagent.governance (3.1.0 exports):** `CFOAnalyticsEngine`, `EvidencePackGenerator`, and `ComplianceDossier` are importable from `govagent.governance`. The evidence generator reads a local JSONL buffer. A multi-tenant dossier is built from stored rows in the private control plane, [govagent-platform](https://github.com/thekakodkar/govagent-platform). `Policy` reads nested `fiscal_governance.global_limits` and `alignment` unless the same key is set at the top level. `HarborVerifier` calls Harbor v2 and fails closed unless the process is explicitly using the `mock-token` offline stub.
 
-**govagent.api & govagent.hitl (The Gateway & Judiciary):** Powers the stateless REST communication network. It exposes an async FastAPI gateway that integrates seamlessly with a Next.js long-polling frontend dashboard, while routing out-of-band policy breaches to corporate Slack workspaces via firewall-resilient webhooks to enforce role-weighted, multi-signature human consensus.
+**govagent.api & govagent.hitl (The Gateway & Judiciary):** Powers the stateless REST communication network. A repo-local FastAPI sandbox can route out-of-band policy breaches to Slack workspaces via webhooks to enforce role-weighted, multi-signature human consensus. That sandbox is not part of the published package.
 
 ---
 
@@ -339,11 +338,6 @@ govagent/
 │   └── team_policy.yaml             # Shared multi-role configuration scheme matrix
 │
 ├── src/                             # Core Project Development Root
-│   ├── app/                         # Next.js Presentation Panel Dashboard Frontend
-│   │   ├── globals.css              # Frontend global interface styling configurations
-│   │   ├── layout.tsx               # Next.js root layout metadata wrapping html trees
-│   │   └── page.tsx                 # Core live evaluation dashboard UI rendering engine
-│   │
 │   └── govagent/                    # Core Python Governance Framework Packages
 │       ├── __init__.py              # Root initialization plane exposing top-level framework decorators
 │       ├── agent.py                 # ExecutiveAgent runtime coordination loop logic
