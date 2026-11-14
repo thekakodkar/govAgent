@@ -1935,7 +1935,7 @@ description = "Parse Python docstrings in reST, Google and Numpydoc format"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "extra == \"crewai\" or extra == \"anthropic\""
+markers = "extra == \"anthropic\" or extra == \"crewai\""
 files = [
     {file = "docstring_parser-0.18.0-py3-none-any.whl", hash = "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b"},
     {file = "docstring_parser-0.18.0.tar.gz", hash = "sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015"},
@@ -2890,7 +2890,7 @@ description = "Fast iterable JSON parser."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"crewai\" or extra == \"langchain\" or extra == \"openai\" or extra == \"anthropic\""
+markers = "extra == \"anthropic\" or extra == \"crewai\" or extra == \"langchain\" or extra == \"openai\""
 files = [
     {file = "jiter-0.14.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:02f36a5c700f105ac04a6556fe664a59037a2c200db3b7e88784fac2ddf02531"},
     {file = "jiter-0.14.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:41eab6c09ceffb6f0fe25e214b3068146edb1eda3649ca2aee2a061029c7ba2e"},
@@ -7746,18 +7746,18 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.43.0"
+version = "3.46.0"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "slack_sdk-3.43.0-py2.py3-none-any.whl", hash = "sha256:4b6557c65577fc172f685af218b811f9f3b4909e24cddd839ada09565f10c585"},
-    {file = "slack_sdk-3.43.0.tar.gz", hash = "sha256:0553152e46c4259eb69f7464cdadc35ba4802ca10f9f5a849c92cf03d6c2ba07"},
+    {file = "slack_sdk-3.46.0-py2.py3-none-any.whl", hash = "sha256:6286d89da97ea193c853609131515e6f1b3edf86866d6e5aad0dba9dcf1cb72d"},
+    {file = "slack_sdk-3.46.0.tar.gz", hash = "sha256:25215ca293d2954ed759b87573b4c833cb3f82ebff371355936515c688411dbb"},
 ]
 
 [package.extras]
-optional = ["SQLAlchemy (>=2.0.49,<3)", "aiodns (>1.0)", "aiohttp (>=3.13.5,<4) ; python_version >= \"3.9\"", "aiohttp (>=3.7.3,<3.11) ; python_version == \"3.8\"", "aiohttp (>=3.7.3,<3.9) ; python_version == \"3.7\"", "boto3 (<=2)", "websocket-client (>=1,<2)", "websockets (>=9.1,<16)"]
+optional = ["SQLAlchemy (>=2.0.54,<3)", "aiodns (>1.0,<3.3) ; python_version < \"3.9\"", "aiodns (>1.0,<4) ; python_version == \"3.9\"", "aiodns (>=4.0.4) ; python_version >= \"3.10\"", "aiohttp (>=3.13.5,<3.14) ; python_version == \"3.9\"", "aiohttp (>=3.14.3,<4) ; python_version >= \"3.10\"", "aiohttp (>=3.7.3,<3.11) ; python_version == \"3.8\"", "aiohttp (>=3.7.3,<3.9) ; python_version == \"3.7\"", "boto3 (<=2)", "websocket-client (>=1,<1.6.2) ; python_version == \"3.7\"", "websocket-client (>=1,<1.9.0) ; python_version == \"3.8\"", "websocket-client (>=1,<1.9.1) ; python_version == \"3.9\"", "websocket-client (>=1.9.2,<2) ; python_version >= \"3.10\"", "websockets (>=16.1.1,<17) ; python_version >= \"3.10\"", "websockets (>=9.1,<12) ; python_version == \"3.7\"", "websockets (>=9.1,<14) ; python_version == \"3.8\"", "websockets (>=9.1,<16) ; python_version == \"3.9\""]
 
 [[package]]
 name = "smart-open"
@@ -7793,7 +7793,7 @@ description = "Sniff out which async library your code is running under"
 optional = true
 python-versions = ">=3.7"
 groups = ["main"]
-markers = "extra == \"crewai\" or extra == \"langchain\" or extra == \"openai\" or extra == \"anthropic\""
+markers = "extra == \"anthropic\" or extra == \"crewai\" or extra == \"langchain\" or extra == \"openai\""
 files = [
     {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
