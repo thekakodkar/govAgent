@@ -1,12 +1,14 @@
 <img width="100%" alt="govAgent logo" src="https://github.com/user-attachments/assets/7aed634c-34e0-450c-9a7e-ee03ecd26ea5" />
 
-# govAgent (v3.4.0)
+# govAgent (v3.5.0)
 
 **The Governance-First Control Plane for AI Agents & Swarms**
 
 govAgent is a lightweight, asynchronous enterprise control plane that hooks natively into multi-agent systems to inject **safety, accountability, observability, and deterministic fiscal control** into autonomous workflows.
 
 Most agent frameworks prioritize speed and raw capability paths. **govAgent** focuses on running them **predictably, securely, and safely** under corporate guardrails, designed to help deployers implement technical controls that map to parts of the **EU AI Act (Regulation 2024/1689)**. This is not a certification.
+
+Security reports: please follow [SECURITY.md](SECURITY.md) (GitHub Security Advisories only). Versioning and deprecation: [docs/VERSIONING.md](docs/VERSIONING.md).
 
 ---
 
@@ -185,7 +187,7 @@ GovAgent utilizes a highly modular package structure to enforce a strict "Separa
 
 **govagent.governance.meta (The Optimization):** Hosts the MetaGovernor engine, an automated self-healing policy loop. It continuously scrapes friction logs and repeated circuit-breaker events (such as successive budget rejections) to autonomously compile non-hallucinated, data-backed POLICY_AMENDMENT_PROPOSALS for review.
 
-**Unreleased on main (not in the tagged PyPI 3.4.0 package):**
+**New in 3.5.0:**
 
 - `await agent.aexecute(task)` is the explicit async loop; `await agent.execute(task)` is unchanged and still works.
 - Optional extras: `govagent[openai]` (`OpenAIClient`, `AzureOpenAIClient`), `govagent[anthropic]` (`AnthropicClient`), and `govagent[mcp]` (official MCP SDK). The clients map tool calls and token usage, including `estimated_cost_usd`, onto `LLMResponse`. Tests mock the network.
@@ -427,6 +429,6 @@ We enforce a strict branching strategy to keep `main` stable:
 
 ---
 ### Author Stamp
-*   **Framework:** GovAgent v3.4.0 
+*   **Framework:** GovAgent v3.5.0 
 *   **Compliance:** Designed for Article 9, 12, and 14 Accountability
 *   **Status:** Active / Open-Source Standard

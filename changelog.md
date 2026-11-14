@@ -6,8 +6,7 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ## [Unreleased]
 
-These changes are on `main` only. They are **not** part of the tagged PyPI release `govagent==3.4.0`. Do not treat this section as a published version.
-
+## [3.5.0] - 2026-11-14
 ### Added
 
 - Broader unit coverage for Slack HITL, the Ollama client, the policy router, evidence-pack generation, CloudWatch / Azure / JSONL exporters, and pricing, with network clients mocked. Target coverage is at least 85%.
