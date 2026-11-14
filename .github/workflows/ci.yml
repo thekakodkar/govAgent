@@ -27,7 +27,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - python-version: "3.10"
+            extras: "enterprise"
+            pytest_args: "--ignore=tests/test_crewai_adapter.py"
+          - python-version: "3.11"
+            extras: "crewai enterprise"
+            pytest_args: ""
+          - python-version: "3.12"
+            extras: "crewai enterprise"
+            pytest_args: ""
+          - python-version: "3.13"
+            extras: "crewai enterprise"
+            pytest_args: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,11 +48,11 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
       - name: Install package
-        run: poetry install --with dev --extras "crewai enterprise" --no-interaction --no-ansi
+        run: poetry install --with dev --extras "${{ matrix.extras }}" --no-interaction --no-ansi
       - name: Download spaCy model
         run: poetry run python -m spacy download en_core_web_lg
       - name: Test
-        run: poetry run pytest -v --tb=short --asyncio-mode=auto
+        run: poetry run pytest -v --tb=short --asyncio-mode=auto ${{ matrix.pytest_args }}
       - name: Wheel layout
         if: matrix.python-version == '3.12'
         run: poetry run pytest tests/test_wheel_layout.py -v --tb=short
