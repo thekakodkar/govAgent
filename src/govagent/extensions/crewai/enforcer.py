@@ -36,7 +36,7 @@ class GovAgentCrewAILLMBridge(LLM):
         self.core_router = core_router
         self.model_name = model_name
 
-    def call(self, messages: list[dict[str, str]], **kwargs) -> str:
+    def call(self, messages: list[dict[str, str]], **kwargs) -> str:  # type: ignore[override]
         """
         Intercepts CrewAI's generation call, packages it into an LLMRequest,
         and forces it down into the async core PolicyBasedRouter execution fabric.
@@ -193,7 +193,7 @@ class GovAgentEnforcer:
             if hasattr(self.telemetry_manager, "record_metrics"):
                 self.telemetry_manager.record_metrics(
                     trace_id=trace_id, agent_role=agent_self.role, status=execution_status,
-                    model=agent_self.llm.model, latency=elapsed_time, payload_size=len(scrubbed_payload)
+                    model=agent_self.llm.model, latency=elapsed_time, payload_size=len(scrubbed_payload)  # type: ignore[union-attr]
                 )
             else:
                 import json
@@ -203,7 +203,7 @@ class GovAgentEnforcer:
                     "trace_id": trace_id, 
                     "agent_role": agent_self.role,
                     "status": execution_status, 
-                    "model_endpoint": agent_self.llm.model, 
+                    "model_endpoint": agent_self.llm.model,  # type: ignore[union-attr]
                     "latency_ms": int(elapsed_time * 1000),
                     "cumulative_spend_usd": updated_metrics["cumulative_spend"]
                 })
@@ -211,4 +211,4 @@ class GovAgentEnforcer:
 
             return result
 
-        Agent.execute_task = wrapped_execute_task
+        Agent.execute_task = wrapped_execute_task  # type: ignore[method-assign,assignment]
