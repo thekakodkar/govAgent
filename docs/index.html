@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>govAgent 3.3.0 — Governance library for agentic AI</title>
+    <title>govAgent 3.4.0 — Governance library for agentic AI</title>
     <meta name="description" content="govAgent is a Python governance library that wraps LLM and tool-calling agents with policy YAML, fiscal circuit breakers, PII redaction, semantic rails, Harbor supply-chain checks, human oversight, and a default JSONL audit log. Beta software; not an EU AI Act certification.">
     <link rel="canonical" href="https://thekakodkar.github.io/govAgent/">
     <meta name="robots" content="index,follow">
@@ -11,12 +11,12 @@
     <meta name="theme-color" content="#090d16">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="govAgent">
-    <meta property="og:title" content="govAgent 3.3.0 — Governance library for agentic AI">
+    <meta property="og:title" content="govAgent 3.4.0 — Governance library for agentic AI">
     <meta property="og:description" content="Policy YAML, fiscal gates, PII redaction, semantic rails, Harbor checks, HITL, and a default JSONL audit log for Python agents. Beta; not a regulatory certification.">
     <meta property="og:url" content="https://thekakodkar.github.io/govAgent/">
     <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="govAgent 3.3.0 — Governance library for agentic AI">
+    <meta name="twitter:title" content="govAgent 3.4.0 — Governance library for agentic AI">
     <meta name="twitter:description" content="A Python library for governing LLM tool-calling agents. Beta software; not an EU AI Act certification.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23090d16'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Inter,Arial' font-size='28' font-weight='700' fill='%2360a5fa'%3EgA%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +29,7 @@
       "name": "govAgent",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Python 3.10–3.13",
-      "softwareVersion": "3.3.0",
+      "softwareVersion": "3.4.0",
       "license": "https://opensource.org/licenses/MIT",
       "url": "https://thekakodkar.github.io/govAgent/",
       "downloadUrl": "https://pypi.org/project/govagent/",
@@ -251,7 +251,7 @@
             <div>
                 <h1>govAgent</h1>
                 <p>Governance-first agents</p>
-                <span class="badge-version">v3.3.0</span>
+                <span class="badge-version">v3.4.0</span>
             </div>
         </div>
         <nav>
@@ -288,14 +288,14 @@
             <header class="hero">
                 <div class="pills">
                     <span class="pill">Python 3.10–3.13</span>
-                    <span class="pill">PyPI <code class="inline">govagent</code> 3.3.0</span>
+                    <span class="pill">PyPI <code class="inline">govagent</code> 3.4.0</span>
                     <span class="pill amber">Development Status: Beta</span>
                     <span class="pill green">MIT License</span>
                 </div>
                 <h2>Governed execution for agentic AI</h2>
                 <p class="lede">govAgent is a Python library that wraps LLM calls and registered tools with policy YAML, fiscal circuit breakers, PII redaction, semantic alignment checks, Harbor artifact verification, human-in-the-loop approval, and a default JSONL audit log.</p>
                 <div class="callout warn">
-                    <strong>Beta, not a certification.</strong> This page describes the current <code class="inline">main</code> branch (package version <strong>3.3.0</strong> in <code class="inline">pyproject.toml</code>). The execute-path and policy fixes documented here are listed under <strong>Unreleased</strong> in the changelog and are not necessarily what a <code class="inline">pip install govagent==3.3.0</code> from PyPI will do yet — install from GitHub to get them. govAgent does not certify systems under the EU AI Act, ISO/IEC 42001, or the NIST AI RMF.
+                    <strong>Beta, not a certification.</strong> This page describes <strong>govagent 3.4.0</strong> (<code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code>). govAgent does not certify systems under the EU AI Act, ISO/IEC 42001, or the NIST AI RMF.
                 </div>
             </header>
 
@@ -462,9 +462,9 @@ asyncio.run(main())</pre>
 
             <h2 class="section" id="versions">Versions</h2>
             <ul>
-                <li><code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code>: <strong>3.3.0</strong>.</li>
+                <li><code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code>: <strong>3.4.0</strong>.</li>
                 <li>The FastAPI sandbox (not in the wheel) and <code class="inline">ComplianceDossier.framework_version</code> now use the same package version.</li>
-                <li>Git tags currently stop at <code class="inline">v3.1.0</code>. PyPI 3.2.0 and 3.3.0 were documentation/metadata publishes. Execute and policy fixes on this page are documented in the changelog as <strong>Unreleased</strong> until the next tagged, approved publish.</li>
+                <li>Git tag and GitHub Release: <code class="inline">v3.4.0</code>. PyPI 3.2.0 and 3.3.0 were documentation/metadata publishes without tags.</li>
                 <li>Sample YAML <code class="inline">metadata.version</code> values such as <code class="inline">0.6.0</code> are policy-document versions, not the library version.</li>
             </ul>
 
@@ -473,7 +473,7 @@ asyncio.run(main())</pre>
             <p>Author: <a href="https://www.linkedin.com/in/thekakodkar/">Niraj Kakodkar</a>. Source: <a href="https://github.com/thekakodkar/GovAgent">github.com/thekakodkar/GovAgent</a>. Package: <a href="https://pypi.org/project/govagent/">pypi.org/project/govagent</a>.</p>
 
             <footer class="page-footer">
-                <span>govAgent v3.3.0 • MIT License</span>
+                <span>govAgent v3.4.0 • MIT License</span>
                 <span><a href="https://github.com/thekakodkar/GovAgent">GitHub</a> · <a href="https://pypi.org/project/govagent/">PyPI</a> · <a href="https://www.linkedin.com/in/thekakodkar/">Author</a></span>
             </footer>
         </div>

@@ -6,6 +6,7 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-11-14
 ### Behavior changes
 
 - **Policy schema:** `Policy` now projects `registry_alignment.allowed_tools` / `high_risk_tools` and `oversight` (including `oversight.judiciary` and `oversight.privacy.target_entities`) in addition to top-level `tools:` and `judiciary`. Top-level `tools:` and `judiciary` still win for keys they set. Official sample YAMLs such as `policies/finance_policy.yaml` therefore enforce their allow-list and mark `execute_financial_transaction` as high-risk (HITL). This is a behavior change for anyone who loaded those samples and expected an empty allow-list.
@@ -24,6 +25,11 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 - `SemanticGuard` no longer crashes process startup when `sentence-transformers` is missing; install `govagent[enterprise]` to enable vector checks.
 - `post_session_cleanup` recognizes both `POLICY_AMENDMENT_PROPOSAL` and the previous plural typo.
 - The PyPI trove classifier is `Development Status :: 4 - Beta` (was Production/Stable).
+
+### Packaging and CI
+
+- Removed the unused Next.js dashboard under `src/app/` (and the leftover root Next.js project files). It was never included in the published wheel. The repo-local FastAPI sandbox remains and still requires `GOVAGENT_SECRET_TOKEN`.
+- CI runs the test suite on Python 3.10, 3.11, 3.12, and 3.13. Ruff, mypy, and the wheel-layout check run on 3.12. The optional `crewai` extra is installed on 3.11+; a transitive `onnxruntime` wheel is not available for 3.10.
 
 ## [3.3.0] - 2026-11-13
 ### Docs and package metadata only
