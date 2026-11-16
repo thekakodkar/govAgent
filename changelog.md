@@ -5,6 +5,13 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 ---
 
 ## [Unreleased]
+### Security
+
+- `CircuitBreaker` and `HITLManager` now fail closed on a malformed monetary `amount`. `NaN`, infinities, negative numbers and non-numeric values used to compare below every ceiling (a `NaN` amount skipped the per-transaction cap and landed in the weakest approval tier); they now raise `GovernanceViolation` (breaker) or are priced at the strictest approval tier (HITL). New helper `govagent.guards.circuit_breaker.checked_amount`.
+- `SlackJudiciaryAdapter` accepts an optional `allowed_approvers={slack_user_id: role}` map. When set, only listed users can vote and nobody can sign above their own role. The default (`None`) keeps the previous open behaviour and logs a warning at `start()`.
+- `HarborVerifier`: the offline `mock-token` stub is refused when `GOVAGENT_ENVIRONMENT=production`, and logs a warning otherwise.
+- `GovernedMCPGateway` redacts PII in nested dict, list and tuple arguments (previously only top-level strings) and warns when the policy has no tool allow-list.
+- Sandbox API (`api/server.py`, not part of the wheel): `policy_profile` is confined to `./policies/*.yaml`, bearer-token comparison is constant-time, CORS uses an explicit origin list (`GOVAGENT_CORS_ORIGINS`, no wildcard, no credentials), `task_input` is capped at 20,000 characters, the in-memory state map is bounded, and the dev image runs as a non-root user with ports bound to 127.0.0.1.
 
 ## [3.5.0] - 2026-11-14
 ### Added

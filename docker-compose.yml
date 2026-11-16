@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: govagent-api-gateway
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - .:/app
     env_file:
@@ -16,7 +16,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app/src:/app
-    command: poetry run uvicorn api.server:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn api.server:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
 
   # 🎨 CONTROL PLANE MANAGEMENT PANEL 
@@ -24,7 +24,7 @@ services:
     image: node:18-alpine
     container_name: govagent-web-sandbox
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - .:/app
     working_dir: /app

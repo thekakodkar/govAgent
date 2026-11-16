@@ -16,8 +16,23 @@ class SlackJudiciaryAdapter:
     Refactored Institutional Multi-Signature Adapter (v0.6.0).
     Manages user interface delivery and maps user inputs to structured voting vectors.
     """
-    def __init__(self, bot_token: str | None = None, app_token: str | None = None, channel_id: str = ""):
+    def __init__(
+        self,
+        bot_token: str | None = None,
+        app_token: str | None = None,
+        channel_id: str = "",
+        allowed_approvers: dict[str, str] | None = None,
+    ):
+        """``allowed_approvers`` maps a Slack user id to the highest role that user may sign as
+        (for example ``{"U012ABC": "Director", "U034DEF": "Lead"}``).
+
+        When it is ``None`` (the default, kept for backward compatibility) every member of the
+        channel can press any button, so the role on the button is self-asserted. Set it in
+        production so a voter's weight comes from who they are, not from which button they press.
+        """
+
         self.channel_id = channel_id
+        self.allowed_approvers = dict(allowed_approvers) if allowed_approvers is not None else None
         self.client = WebClient(token=bot_token or "")
         self.pending_requests: dict[str, tuple[ApprovalRequest, asyncio.Future]] = {}
         self.socket_client = SocketModeClient(app_token=app_token or "", web_client=self.client)
@@ -34,6 +49,11 @@ class SlackJudiciaryAdapter:
     def start(self) -> None:
         """Establishes the persistent WebSocket connection thread."""
         logger.info("🏛️ Judiciary Layer: Initializing Real-time Socket Mode listener...")
+        if self.allowed_approvers is None:
+            logger.warning(
+                "SlackJudiciaryAdapter: allowed_approvers is not set, so any channel member can approve "
+                "or veto as any role. Pass allowed_approvers={slack_user_id: role} in production."
+            )
         self.socket_client.socket_mode_request_listeners.append(self.handle_interaction)  # type: ignore[arg-type]
         self.socket_client.connect()
 
@@ -133,6 +153,19 @@ class SlackJudiciaryAdapter:
             }
         ]
 
+    def _may_vote(self, user_id: str, action: str) -> bool:
+        """True when no allow-list is configured, or the user may sign as the role on the button."""
+
+        if self.allowed_approvers is None:
+            return True
+        granted = self.allowed_approvers.get(user_id)
+        if granted is None:
+            return False
+        if action.startswith("approve_"):
+            wanted = action.split("_", 1)[1]
+            return self.voter_weights.get(wanted, 1.0) <= self.voter_weights.get(granted, 0.0)
+        return action == "reject"
+
     def handle_interaction(self, client: SocketModeClient, req: SocketModeRequest) -> None:
         """Processes interaction events across the distributed workspace board."""
         if req.type != "interactive":
@@ -148,6 +181,14 @@ class SlackJudiciaryAdapter:
 
         if request_id in self.pending_requests:
             request, future = self.pending_requests[request_id]
+
+            if not self._may_vote(user_id, action):
+                logger.warning(
+                    "SlackJudiciaryAdapter: ignored %s from %s, who is not authorized for that role.",
+                    action,
+                    user_id,
+                )
+                return
 
             if action.startswith("approve_"):
                 assigned_role = action.split("_")[1]

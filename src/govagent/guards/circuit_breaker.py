@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from govagent.context import get_shared_fiscal_metrics
@@ -10,6 +11,25 @@ from .semantic import SemanticGuard
 
 class GovernanceViolation(Exception):
     """Institutional Exception raised on policy breach."""
+
+
+def checked_amount(value: Any) -> float:
+    """Return ``value`` as a finite, non-negative float or raise ``GovernanceViolation``.
+
+    ``float("nan")`` compares false against every ceiling, and a negative amount lowers the
+    projected total, so both would slip past a ``>`` check. Anything that is not a plain
+    number fails closed instead of being treated as zero.
+    """
+
+    if isinstance(value, bool):
+        raise GovernanceViolation("INVALID AMOUNT: a boolean is not a monetary amount.")
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise GovernanceViolation("INVALID AMOUNT: the amount is not a number.") from None
+    if not math.isfinite(number) or number < 0:
+        raise GovernanceViolation("INVALID AMOUNT: the amount must be a finite, non-negative number.")
+    return number
 
 
 class CircuitBreaker:
@@ -32,6 +52,7 @@ class CircuitBreaker:
     def check_financial_risk(self, local_projected_cost: float) -> None:
         """Hardened fiscal gate over aggregate swarm spend plus the local action cost."""
         metrics = get_shared_fiscal_metrics()
+        local_projected_cost = checked_amount(local_projected_cost)
         total_projected_cost = metrics["cumulative_spend"] + local_projected_cost
 
         limits = self._limits()
@@ -47,6 +68,7 @@ class CircuitBreaker:
 
     def check_transaction_limit(self, amount: float) -> None:
         """Enforce per-transaction ceilings when the policy defines them."""
+        amount = checked_amount(amount)
         limits = self._limits()
         caps = [
             limits.get("transaction_ceiling"),
@@ -74,11 +96,8 @@ class CircuitBreaker:
     async def evaluate(self, tool_name: str, args: dict[str, Any], thought: str = "") -> bool:
         """Three-stage check: semantic alignment, per-transaction cap, then fiscal TCO."""
         self.check_semantic_alignment(thought)
-        projected = args.get("amount", 0.0) or 0.0
-        try:
-            projected_value = float(projected)
-        except (TypeError, ValueError):
-            projected_value = 0.0
+        projected = args.get("amount", 0.0)
+        projected_value = 0.0 if projected is None or projected == "" else checked_amount(projected)
         self.check_transaction_limit(projected_value)
         self.check_financial_risk(projected_value)
         return True

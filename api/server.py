@@ -1,4 +1,5 @@
 # api/server.py
+import hmac
 import os
 import re
 import glob
@@ -9,7 +10,7 @@ from typing import Optional, Dict, Any, List
 import httpx
 from fastapi import FastAPI, HTTPException, Header, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 base_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,18 +36,39 @@ from govagent.hitl.slack_adapter import SlackJudiciaryAdapter
 
 app = FastAPI(title="govAgent Enterprise Governance Plane", version=__version__)
 
+# Browsers may call this sandbox only from the origins listed in GOVAGENT_CORS_ORIGINS
+# (comma separated). The default is the local dashboard. Credentials are not used: the API
+# authenticates with a bearer header, so cookies are never needed cross-origin.
+_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("GOVAGENT_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if origin.strip() and origin.strip() != "*"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # No default secret. Set GOVAGENT_SECRET_TOKEN before serving this sandbox.
 API_TOKEN = os.environ.get("GOVAGENT_SECRET_TOKEN") or ""
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
-LIVE_TRANSACTION_STATES: Dict[str, Dict[str, Any]] = {}
+
+
+class _BoundedStates(dict):
+    """In-memory state map that evicts the oldest entry so it cannot grow without limit."""
+
+    MAX_ENTRIES = 10_000
+
+    def __setitem__(self, key, value):
+        if key not in self and len(self) >= self.MAX_ENTRIES:
+            del self[next(iter(self))]
+        super().__setitem__(key, value)
+
+
+LIVE_TRANSACTION_STATES: Dict[str, Dict[str, Any]] = _BoundedStates()
 
 evidence_generator = EvidencePackGenerator()
 cfo_engine = CFOAnalyticsEngine()
@@ -59,7 +81,7 @@ MODEL_RATES = {
 }
 
 class GovernanceRequest(BaseModel):
-    task_input: str
+    task_input: str = Field(min_length=1, max_length=20_000)
     policy_profile: str = "policies/finance_policy.yaml"
     selected_model: Optional[str] = "local_ollama"
 
@@ -82,8 +104,24 @@ class PolicySummary(BaseModel):
     raw_content: Dict[str, Any]
 
 def verify_auth(authorization: Optional[str] = Header(None)):
-    if not API_TOKEN or not authorization or authorization != f"Bearer {API_TOKEN}":
+    expected = f"Bearer {API_TOKEN}"
+    if not API_TOKEN or not authorization or not hmac.compare_digest(authorization.encode(), expected.encode()):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid Token.")
+
+def _resolve_policy_path(profile: str) -> str:
+    """Resolve ``policy_profile`` to a YAML file inside ./policies, or raise 404.
+
+    Absolute paths, ``..`` segments and symlinks that leave the policies directory are refused,
+    so a caller cannot make the server parse arbitrary files on disk.
+    """
+
+    policies_root = os.path.realpath(os.path.join(base_directory, "policies"))
+    candidate = os.path.realpath(os.path.join(base_directory, profile or ""))
+    inside = candidate.startswith(policies_root + os.sep)
+    if not inside or not candidate.lower().endswith((".yaml", ".yml")) or not os.path.isfile(candidate):
+        raise HTTPException(status_code=404, detail="Policy file not found.")
+    return candidate
+
 
 def extract_policy_cap(policy_instance: Any, raw_dict: Dict[str, Any]) -> float:
     """Extracts ceiling from Pillar 2: fiscal_governance.global_limits.transaction_ceiling."""
@@ -247,9 +285,7 @@ async def slack_webhook_callback(trace_id: str = Query(...), decision: str = Que
 async def evaluate_workflow_intent(payload: GovernanceRequest):
     trace_id = f"TR-INFRA-{uuid.uuid4().hex[:6].upper()}"
     
-    resolved_policy_path = os.path.join(base_directory, payload.policy_profile)
-    if not os.path.exists(resolved_policy_path):
-        raise HTTPException(status_code=404, detail="Policy file not found.")
+    resolved_policy_path = _resolve_policy_path(payload.policy_profile)
         
     active_policy = Policy.from_yaml(resolved_policy_path)
     raw_dict = active_policy.__dict__ if hasattr(active_policy, "__dict__") else {}

@@ -1,4 +1,5 @@
 import logging
+import math
 import uuid
 from enum import Enum
 from typing import Any
@@ -6,6 +7,27 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("govagent.hitl.manager")
+
+def _requested_amount(context: dict) -> float:
+    """Amount used to pick the approval tier.
+
+    A missing amount is zero. An amount that is not a finite, non-negative number (``nan``,
+    ``-1``, ``"abc"``) would compare below every threshold and land in the weakest tier, so it
+    is priced at the strictest tier instead.
+    """
+
+    params = context.get("params")
+    if not isinstance(params, dict) or "amount" not in params or params["amount"] is None:
+        return 0.0
+    raw = params["amount"]
+    try:
+        value = float(raw) if not isinstance(raw, bool) else float("nan")
+    except (TypeError, ValueError):
+        return math.inf
+    if not math.isfinite(value) or value < 0:
+        return math.inf
+    return value
+
 
 class ApprovalStatus(Enum):
     PENDING = "pending"
@@ -58,7 +80,7 @@ class HITLManager:
         Orchestrates the asynchronous evaluation process against an escalating risk matrix.
         """
         context_dict = context or {}
-        requested_amount = context_dict.get("params", {}).get("amount", 0.0)
+        requested_amount = _requested_amount(context_dict)
         
         # 1. Evaluate Risk Tiers & Define Corporate Score Constraints
         if requested_amount >= 5000.0:

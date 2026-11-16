@@ -44,14 +44,21 @@ class GovernedMCPGateway:
         self.telemetry = telemetry or TelemetryManager()
         self.hitl = hitl_manager or HITLManager()
 
+    def _redact_value(self, value: Any) -> Any:
+        """Redact PII in strings at any depth of nested dicts, lists and tuples."""
+
+        if isinstance(value, str):
+            return self.privacy.redact_task(value)
+        if isinstance(value, dict):
+            return {key: self._redact_value(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._redact_value(item) for item in value]
+        if isinstance(value, tuple):
+            return tuple(self._redact_value(item) for item in value)
+        return value
+
     def _redact_arguments(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        redacted: dict[str, Any] = {}
-        for key, value in arguments.items():
-            if isinstance(value, str):
-                redacted[key] = self.privacy.redact_task(value)
-            else:
-                redacted[key] = value
-        return redacted
+        return {key: self._redact_value(value) for key, value in arguments.items()}
 
     async def call_tool(
         self,
@@ -68,6 +75,12 @@ class GovernedMCPGateway:
         self.telemetry.record_guard("privacy")
 
         allowed = self.policy.allowed_tools
+        if not allowed:
+            logger.warning(
+                "Policy has no tool allow-list, so MCP tool '%s' is allowed by default. "
+                "List tools under tool_rules to enforce an allow-list.",
+                name,
+            )
         if allowed and name not in allowed:
             raise GovernanceViolation(
                 f"UNAUTHORIZED TOOL: '{name}' is not on the policy allow-list {allowed}."

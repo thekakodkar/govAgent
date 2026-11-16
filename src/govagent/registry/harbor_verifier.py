@@ -30,6 +30,17 @@ class HarborVerifier:
         """Queries Harbor security definitions to validate container status."""
         logger.info(f"⚓ Harbor Verifier: Scanning supply chain for {repository}@{artifact_digest}...")
         if self._offline_stub():
+            if os.getenv("GOVAGENT_ENVIRONMENT", "").strip().lower() == "production":
+                return {
+                    "verified": False,
+                    "reason": "HARBOR_UNVERIFIED",
+                    "details": "The offline mock-token stub is refused when GOVAGENT_ENVIRONMENT=production; "
+                    "set HARBOR_ROBOT_TOKEN to a real robot token.",
+                }
+            logger.warning(
+                "HarborVerifier is using the offline mock-token stub: artifacts are NOT verified. "
+                "Set HARBOR_ROBOT_TOKEN, and GOVAGENT_ENVIRONMENT=production to refuse the stub."
+            )
             return self._stub_report(repository or "")
         if not repository or not artifact_digest:
             return {
