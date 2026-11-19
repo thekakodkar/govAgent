@@ -6,9 +6,12 @@ import glob
 import uuid
 import datetime
 import logging
+import threading
+import time
+from collections import defaultdict, deque
 from typing import Optional, Dict, Any, List
 import httpx
-from fastapi import FastAPI, HTTPException, Header, Depends, Query
+from fastapi import FastAPI, HTTPException, Header, Depends, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -51,6 +54,124 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+# Optional origin lock and rate limit. Both are off unless the matching env var is set, so
+# existing local and CI runs are unchanged. Not part of the published wheel.
+_ORIGIN_HEADER = b"x-govagent-origin"
+_ORIGIN_EXEMPT = frozenset({"/healthz"})
+_sandbox_rate_lock = threading.Lock()
+_SANDBOX_MAX_TRACKED = 10_000
+_sandbox_rate_events: dict[str, deque[float]] = defaultdict(deque)
+
+
+def reset_sandbox_gate_state() -> None:
+    """Test helper."""
+    with _sandbox_rate_lock:
+        _sandbox_rate_events.clear()
+
+
+def _sandbox_int(name: str, default: int) -> int:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value >= 0 else default
+
+
+def _sandbox_origin_secret() -> str:
+    return (os.environ.get("GOVAGENT_ORIGIN_SECRET") or "").strip()
+
+
+def _sandbox_rate_limit() -> int:
+    return _sandbox_int("GOVAGENT_SANDBOX_RATE_LIMIT", 0)
+
+
+def _header(scope, name: bytes) -> str:
+    for key, value in scope.get("headers") or []:
+        if key == name:
+            return value.decode("latin-1").strip()
+    return ""
+
+
+def _peer(scope) -> str:
+    client = scope.get("client")
+    return (client[0] if client else "unknown") or "unknown"
+
+
+def _secret_matches(provided: str, secret: str) -> bool:
+    if not provided or not secret:
+        return False
+    try:
+        return hmac.compare_digest(provided, secret)
+    except (TypeError, ValueError):
+        return False
+
+
+class _SandboxGate:
+    """ASGI gate: optional origin lock, then optional per-IP rate limit."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        provided = _header(scope, _ORIGIN_HEADER)
+        scope = dict(scope)
+        scope["headers"] = [(k, v) for k, v in (scope.get("headers") or []) if k != _ORIGIN_HEADER]
+        path = scope.get("path") or ""
+        secret = _sandbox_origin_secret()
+        origin_ok = False
+        if secret and path not in _ORIGIN_EXEMPT:
+            if not _secret_matches(provided, secret):
+                await send({
+                    "type": "http.response.start",
+                    "status": 403,
+                    "headers": [(b"content-type", b"text/plain; charset=utf-8"), (b"cache-control", b"no-store")],
+                })
+                await send({"type": "http.response.body", "body": b"Forbidden"})
+                return
+            origin_ok = True
+        limit = _sandbox_rate_limit()
+        if limit and path not in _ORIGIN_EXEMPT:
+            window = max(_sandbox_int("GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS", 60), 1)
+            address = _header(scope, b"cf-connecting-ip") if origin_ok else ""
+            if not address:
+                address = _peer(scope)
+            now = time.monotonic()
+            retry = 0
+            with _sandbox_rate_lock:
+                if len(_sandbox_rate_events) > _SANDBOX_MAX_TRACKED:
+                    # Bound memory when callers rotate addresses (botnets, Tor).
+                    for key in [k for k, v in _sandbox_rate_events.items() if not v or v[-1] <= now - window]:
+                        _sandbox_rate_events.pop(key, None)
+                events = _sandbox_rate_events[address]
+                while events and events[0] <= now - window:
+                    events.popleft()
+                if len(events) >= limit:
+                    retry = int(events[0] + window - now) + 1
+                else:
+                    events.append(now)
+            if retry:
+                await send({
+                    "type": "http.response.start",
+                    "status": 429,
+                    "headers": [
+                        (b"content-type", b"text/plain; charset=utf-8"),
+                        (b"retry-after", str(retry).encode("ascii")),
+                        (b"cache-control", b"no-store"),
+                    ],
+                })
+                await send({"type": "http.response.body", "body": b"Too Many Requests"})
+                return
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(_SandboxGate)
 
 # No default secret. Set GOVAGENT_SECRET_TOKEN before serving this sandbox.
 API_TOKEN = os.environ.get("GOVAGENT_SECRET_TOKEN") or ""
@@ -103,9 +224,16 @@ class PolicySummary(BaseModel):
     required_guards: List[str]
     raw_content: Dict[str, Any]
 
-def verify_auth(authorization: Optional[str] = Header(None)):
+def verify_auth(request: Request, authorization: Optional[str] = Header(None)):
     expected = f"Bearer {API_TOKEN}"
     if not API_TOKEN or not authorization or not hmac.compare_digest(authorization.encode(), expected.encode()):
+        # Failed attempts are logged with peer address, path and user agent (never the token).
+        logger.warning(
+            "sandbox auth rejected ip=%s path=%s ua=%r",
+            request.client.host if request.client else "unknown",
+            request.url.path[:200],
+            (request.headers.get("user-agent") or "")[:255],
+        )
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid Token.")
 
 def _resolve_policy_path(profile: str) -> str:

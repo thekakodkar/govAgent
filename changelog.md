@@ -12,6 +12,7 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 - `HarborVerifier`: the offline `mock-token` stub is refused when `GOVAGENT_ENVIRONMENT=production`, and logs a warning otherwise.
 - `GovernedMCPGateway` redacts PII in nested dict, list and tuple arguments (previously only top-level strings) and warns when the policy has no tool allow-list.
 - Sandbox API (`api/server.py`, not part of the wheel): `policy_profile` is confined to `./policies/*.yaml`, bearer-token comparison is constant-time, CORS uses an explicit origin list (`GOVAGENT_CORS_ORIGINS`, no wildcard, no credentials), `task_input` is capped at 20,000 characters, the in-memory state map is bounded, and the dev image runs as a non-root user with ports bound to 127.0.0.1.
+- Sandbox API origin lock and rate limit are opt-in and off by default: set `GOVAGENT_ORIGIN_SECRET` (CDN/proxy adds `X-Govagent-Origin`) and/or `GOVAGENT_SANDBOX_RATE_LIMIT` (optional `GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS`, default 60). The limiter keys on `CF-Connecting-IP` only after the origin lock accepts the request, and drops stale entries past 10,000 tracked addresses. Failed sandbox bearer-token checks are logged with peer address, path and user agent (never the token).
 
 ## [3.5.0] - 2026-11-14
 ### Added

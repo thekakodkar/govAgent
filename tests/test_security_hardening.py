@@ -224,3 +224,40 @@ def test_live_state_map_is_bounded():
     for index in range(10):
         states[f"t{index}"] = {}
     assert len(states) == 3 and "t9" in states and "t0" not in states
+
+def test_sandbox_origin_lock_is_off_by_default(api_client):
+    assert api_client.get("/api/v1/governance/policies").status_code == 401
+    assert api_client.get("/api/v1/governance/policies", headers=AUTH).status_code == 200
+
+
+def test_sandbox_origin_lock_and_rate_limit(api_client, monkeypatch):
+    from api.server import reset_sandbox_gate_state
+
+    reset_sandbox_gate_state()
+    monkeypatch.setenv("GOVAGENT_ORIGIN_SECRET", "sandbox-origin-secret")
+    monkeypatch.setenv("GOVAGENT_SANDBOX_RATE_LIMIT", "3")
+    monkeypatch.setenv("GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS", "60")
+    blocked = api_client.get("/api/v1/governance/policies", headers=AUTH)
+    assert blocked.status_code == 403
+    assert blocked.text == "Forbidden"
+    headers = {**AUTH, "X-Govagent-Origin": "sandbox-origin-secret"}
+    assert api_client.get("/api/v1/governance/policies", headers=headers).status_code == 200
+    assert api_client.get("/api/v1/governance/policies", headers=headers).status_code == 200
+    assert api_client.get("/api/v1/governance/policies", headers=headers).status_code == 200
+    limited = api_client.get("/api/v1/governance/policies", headers=headers)
+    assert limited.status_code == 429
+    assert int(limited.headers["retry-after"]) > 0
+
+
+def test_sandbox_failed_auth_is_logged_without_the_token(api_client, caplog):
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="govagent.api"):
+        response = api_client.get(
+            "/api/v1/governance/policies",
+            headers={"Authorization": "Bearer wrong-token-value", "User-Agent": "abuse-bot/1.0"},
+        )
+    assert response.status_code == 401
+    text = caplog.text
+    assert "sandbox auth rejected" in text and "abuse-bot/1.0" in text and "/api/v1/governance/policies" in text
+    assert "wrong-token-value" not in text
