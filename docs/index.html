@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>govAgent v3.5.0 | Library Documentation &amp; Architecture Guide</title>
+    <title>govAgent v3.5.1 | Library Documentation &amp; Architecture Guide</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
@@ -1012,7 +1012,7 @@
 <div class="mobile-topbar">
     <div class="mobile-brand">
         <span class="brand">govAgent</span>
-        <span class="badge-version">v3.5.0</span>
+        <span class="badge-version">v3.5.1</span>
     </div>
     <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open Navigation Menu" aria-expanded="false">
         <svg viewBox="0 0 24 24">
@@ -1032,7 +1032,7 @@
             <div class="brand-top">
                 <div class="brand-title-wrap">
                     <span class="brand">govAgent</span>
-                    <span class="badge-version">v3.5.0</span>
+                    <span class="badge-version">v3.5.1</span>
                 </div>
                 <button class="toggle-btn" id="sidebarToggle" title="Toggle Sidebar" aria-label="Toggle Sidebar">
                     <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -1086,8 +1086,8 @@
     <div class="content-container">
         <header class="hero">
             <span class="hero-eyebrow">Enterprise AI Governance SDK</span>
-            <h1>govAgent v3.5.0 - Library Documentation</h1>
-            <p>govAgent is a Python library that wraps an LLM call in declarative policy enforcement, privacy redaction, tool-schema validation, a fiscal circuit breaker, and cryptographic execution snapshots. This guide documents the public package <code class="inline">govagent</code> as verified against current <code class="inline">main</code> (library version <code class="inline">3.5.0</code>). The 3.5.0 tag includes the MCP gateway, packaged control mapping, optional cloud clients, and <code class="inline">aexecute</code>.</p>
+            <h1>govAgent v3.5.1 - Library Documentation</h1>
+            <p>govAgent is a Python library that wraps an LLM call in declarative policy enforcement, privacy redaction, tool-schema validation, a fiscal circuit breaker, and cryptographic execution snapshots. This guide documents the public package <code class="inline">govagent</code> as verified against current <code class="inline">main</code> (library version <code class="inline">3.5.1</code>). The 3.5.0 tag added the MCP gateway, packaged control mapping, optional cloud clients, and <code class="inline">aexecute</code>; 3.5.1 is a security patch (fail-closed amounts, Slack approver allow-list, sandbox origin lock and rate limit).</p>
             <div class="hero-actions">
                 <a class="hero-btn primary" href="https://pypi.org/project/govagent/" target="_blank" rel="noopener noreferrer"><svg class="hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.9 0C5.8 0 6.2 2.6 6.2 2.6v2.7h5.8v.8H3.9S0 5.7 0 11.9s3.4 6 3.4 6h2v-2.9s-.1-3.4 3.4-3.4h5.8s3.2 0 3.2-3.1V3.2S18.3 0 11.9 0zM8.7 1.8a1 1 0 1 1 0 2.1 1 1 0 0 1 0-2.1z"/><path d="M12.1 24c6.1 0 5.7-2.6 5.7-2.6v-2.7H12v-.8h8.1s3.9.4 3.9-5.8-3.4-6-3.4-6h-2v2.9s.1 3.4-3.4 3.4H9.4s-3.2 0-3.2 3.1v5.3S5.7 24 12.1 24zm3.2-1.8a1 1 0 1 1 0-2.1 1 1 0 0 1 0 2.1z"/></svg>Install from PyPI</a>
                 <a class="hero-btn" href="https://github.com/thekakodkar/GovAgent" target="_blank" rel="noopener noreferrer"><svg class="hero-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>View Source on GitHub</a>
@@ -1095,7 +1095,7 @@
             </div>
             <div class="pill-row">
                 <span class="pill">Python &gt;=3.10,&lt;3.14</span>
-                <span class="pill">PyPI: govagent 3.5.0</span>
+                <span class="pill">PyPI: govagent 3.5.1</span>
                 <span class="pill">MIT License</span>
                 <span class="pill">Extras: crewai, langchain, enterprise, openai, anthropic, mcp</span>
             </div>
@@ -1174,13 +1174,13 @@
             <div class="use-case-card">
                 <div class="card-header">
                     <span class="card-title">PyPI Package and Optional Extras</span>
-                    <span class="tag green">pyproject.toml 3.5.0</span>
+                    <span class="tag green">pyproject.toml 3.5.1</span>
                 </div>
                 <p><code class="inline">pyproject.toml</code> targets Python <code class="inline">&gt;=3.10,&lt;3.14</code>. The published distribution packages the core <code class="inline">govagent</code> library under <code class="inline">src/</code>.</p>
                 <div class="code-wrapper">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     <pre># Core library (includes Presidio, spaCy, Slack, AWS, Azure, and OpenTelemetry dependencies)
-pip install govagent==3.5.0
+pip install govagent==3.5.1
 
 # Optional extras declared in pyproject.toml
 pip install "govagent[enterprise]"   # sentence-transformers (optional local SemanticGuard embeddings)
@@ -1198,7 +1198,37 @@ poetry install --with dev --extras "crewai enterprise"
 python -m spacy download en_core_web_lg</pre>
                 </div>
                 <div class="warn">
-                    <strong>Runtime Dependency Note:</strong> <code class="inline">ExecutiveAgent</code> always constructs <code class="inline">SemanticGuard</code> during initialization. The <code class="inline">enterprise</code> extra (<code class="inline">sentence-transformers</code>) enables local <code class="inline">all-MiniLM-L6-v2</code> checks. Without it, <code class="inline">ExecutiveAgent</code> still constructs; SemanticGuard logs a warning and fails open. A base <code class="inline">pip install govagent==3.5.0</code> is sufficient to import and instantiate the core classes. Optional extras <code class="inline">openai</code>, <code class="inline">anthropic</code>, and <code class="inline">mcp</code> add cloud model clients and the official MCP SDK.
+                    <strong>Runtime Dependency Note:</strong> <code class="inline">ExecutiveAgent</code> always constructs <code class="inline">SemanticGuard</code> during initialization. The <code class="inline">enterprise</code> extra (<code class="inline">sentence-transformers</code>) enables local <code class="inline">all-MiniLM-L6-v2</code> checks. Without it, <code class="inline">ExecutiveAgent</code> still constructs; SemanticGuard logs a warning and fails open. A base <code class="inline">pip install govagent==3.5.1</code> is sufficient to import and instantiate the core classes. Optional extras <code class="inline">openai</code>, <code class="inline">anthropic</code>, and <code class="inline">mcp</code> add cloud model clients and the official MCP SDK.
+                </div>
+            </div>
+            <div class="use-case-card">
+                <div class="card-header">
+                    <span class="card-title">Sandbox API Security Settings</span>
+                    <span class="tag green">new in 3.5.1</span>
+                </div>
+                <p>The repo-local FastAPI sandbox (<code class="inline">api/server.py</code>) is <strong>not</strong> part of the wheel. If you expose it beyond localhost, configure it with these environment variables. The origin lock and the rate limit are opt-in and off by default.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Variable</th><th>Default</th><th>Behavior</th></tr></thead>
+                        <tbody>
+                            <tr><td><code class="inline">GOVAGENT_SECRET_TOKEN</code></td><td>none (required)</td><td>Bearer token for every API route, compared in constant time. Failed checks are logged with peer address, path and user agent (never the token).</td></tr>
+                            <tr><td><code class="inline">GOVAGENT_CORS_ORIGINS</code></td><td><code class="inline">http://localhost:3000,http://127.0.0.1:3000</code></td><td>Comma-separated browser origins. No wildcard, no credentials.</td></tr>
+                            <tr><td><code class="inline">GOVAGENT_ORIGIN_SECRET</code></td><td>off</td><td>Origin lock. Every request except <code class="inline">/healthz</code> must send <code class="inline">X-Govagent-Origin: &lt;secret&gt;</code> or it gets <code class="inline">403 Forbidden</code>. Let your CDN or proxy add the header (for example a Cloudflare <em>Modify Request Header</em> transform rule), so traffic that skips the proxy is refused.</td></tr>
+                            <tr><td><code class="inline">GOVAGENT_SANDBOX_RATE_LIMIT</code></td><td><code class="inline">0</code> (off)</td><td>Requests per client IP per window. Over the limit returns <code class="inline">429</code> with <code class="inline">Retry-After</code>. <code class="inline">CF-Connecting-IP</code> is trusted only after the origin lock accepted the request; otherwise the socket peer address is used.</td></tr>
+                            <tr><td><code class="inline">GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS</code></td><td><code class="inline">60</code></td><td>Rate-limit window in seconds.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="code-wrapper">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre># Example: sandbox behind Cloudflare
+export GOVAGENT_SECRET_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+export GOVAGENT_ORIGIN_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+export GOVAGENT_SANDBOX_RATE_LIMIT=60
+export GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS=60
+uvicorn api.server:app --host 0.0.0.0 --port 8000
+# Cloudflare: Rules &gt; Transform Rules &gt; Modify Request Header &gt; Set static
+#   X-Govagent-Origin = the same value as GOVAGENT_ORIGIN_SECRET</pre>
                 </div>
             </div>
         </section>
@@ -1668,6 +1698,8 @@ print(dossier.framework_version, dossier.dossier_sha256)</pre>
                         <tr><td><code class="inline">GovernanceViolation</code> REGISTRY EXCEPTION</td><td>Calling <code class="inline">verify_and_resolve_tool</code> on an unregistered tool name.</td></tr>
                         <tr><td><code class="inline">GovernanceViolation</code> HARBOR REGISTRY BLOCK</td><td>Harbor v2 (or the offline malicious stub) failed image signature or CVE verification.</td></tr>
                         <tr><td><code class="inline">GovernanceViolation</code> Human Judiciary denied</td><td><code class="inline">secure_approval</code> returned <code class="inline">False</code> or received a veto vote.</td></tr>
+                        <tr><td><code class="inline">GovernanceViolation</code> malformed amount</td><td><code class="inline">CircuitBreaker</code> received a <code class="inline">NaN</code>, infinite, negative or non-numeric <code class="inline">amount</code> (3.5.1 fails closed). <code class="inline">HITLManager</code> prices such amounts at the strictest approval tier instead.</td></tr>
+                        <tr><td>Sandbox <code class="inline">403</code> / <code class="inline">429</code></td><td>Repo sandbox only: missing or wrong <code class="inline">X-Govagent-Origin</code> while <code class="inline">GOVAGENT_ORIGIN_SECRET</code> is set, or the per-IP <code class="inline">GOVAGENT_SANDBOX_RATE_LIMIT</code> was exceeded.</td></tr>
                         <tr><td><code class="inline">ValidationError</code> / <code class="inline">ValueError</code></td><td>Malformed tool arguments; caught by <code class="inline">execute()</code> and surfaced as status <code class="inline">blocked</code>.</td></tr>
                         <tr><td><code class="inline">ValueError</code> Router misconfiguration</td><td>Configured <code class="inline">default_provider</code> is not present in the router's client map.</td></tr>
                         <tr><td><code class="inline">RuntimeError</code> Ollama inference failed</td><td>Non-200 HTTP response from the Ollama <code class="inline">/api/generate</code> endpoint.</td></tr>
@@ -1677,7 +1709,7 @@ print(dossier.framework_version, dossier.dossier_sha256)</pre>
             </div>
             <p><strong>SemanticGuard Calibration Note:</strong> Evaluated against the sample finance prohibited strategies list, an empty string returns <code class="inline">1.0</code>, a standard budget query scores <code class="inline">~0.813</code>, and an overtly adversarial prompt (<em>“We should pursue aggressive tax avoidance and predatory pricing against patients.”</em>) scores <code class="inline">~0.293</code>. Because <code class="inline">SemanticGuard</code> triggers a breach (<code class="inline">0.0</code>) when cosine similarity exceeds the configured threshold, setting <code class="inline">min_similarity_score: 0.85</code> is permissive for <code class="inline">all-MiniLM-L6-v2</code>; thresholds around <code class="inline">0.30–0.45</code> provide tighter semantic enforcement.</p>
             <div class="warn">
-                <strong>Metadata &amp; Version Notes:</strong> <code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code> are <strong>3.5.0</strong>. <code class="inline">ComplianceDossier.framework_version</code> defaults to that package version. Sample templates under <code class="inline">policies/</code> still carry document header version <code class="inline">0.6.0</code>; their <code class="inline">registry_alignment</code> blocks are projected and enforced. This release includes <code class="inline">aexecute</code>, <code class="inline">GovernedMCPGateway</code>, the packaged control catalogue, and the optional cloud clients. None of this is a certification.
+                <strong>Metadata &amp; Version Notes:</strong> <code class="inline">pyproject.toml</code> and <code class="inline">govagent.__version__</code> are <strong>3.5.1</strong>. <code class="inline">ComplianceDossier.framework_version</code> defaults to that package version. Sample templates under <code class="inline">policies/</code> still carry document header version <code class="inline">0.6.0</code>; their <code class="inline">registry_alignment</code> blocks are projected and enforced. This release includes <code class="inline">aexecute</code>, <code class="inline">GovernedMCPGateway</code>, the packaged control catalogue, the optional cloud clients, and the 3.5.1 security hardening. None of this is a certification.
             </div>
         </section>
 
@@ -1704,7 +1736,7 @@ print(dossier.framework_version, dossier.dossier_sha256)</pre>
         </section>
 
         <footer>
-            <span>govAgent v3.5.0 &bull; Author: <a href="https://www.linkedin.com/in/thekakodkar/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Niraj Kakodkar</a> &bull; MIT License</span>
+            <span>govAgent v3.5.1 &bull; Author: <a href="https://www.linkedin.com/in/thekakodkar/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Niraj Kakodkar</a> &bull; MIT License</span>
             <div class="footer-links">
                 <a href="https://github.com/thekakodkar/GovAgent" target="_blank" rel="noopener noreferrer">GitHub</a>
                 <a href="https://pypi.org/project/govagent/" target="_blank" rel="noopener noreferrer">PyPI</a>

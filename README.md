@@ -1,6 +1,6 @@
 <img width="100%" alt="govAgent logo" src="https://github.com/user-attachments/assets/7aed634c-34e0-450c-9a7e-ee03ecd26ea5" />
 
-# govAgent (v3.5.0)
+# govAgent (v3.5.1)
 
 **The Governance-First Control Plane for AI Agents & Swarms**
 
@@ -68,6 +68,16 @@ Ideal for:
 govAgent is a Python library. A repo-local FastAPI sandbox (`api/server.py`) is provided for development; it is **not** included in the published wheel. Set `GOVAGENT_SECRET_TOKEN` before serving it — there is no default API key.
 
 * **FastAPI sandbox (`api/server.py`):** Handles evaluation requests, parses local YAML policies, hosts the Slack callback listener, and tracks in-memory transaction states.
+
+**Sandbox security settings (environment variables):**
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GOVAGENT_SECRET_TOKEN` | none (required) | Bearer token for every API route. Compared in constant time. Failed checks are logged with peer address, path and user agent, never the token. |
+| `GOVAGENT_CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated browser origins. No wildcard, no credentials. |
+| `GOVAGENT_ORIGIN_SECRET` | off | Origin lock (new in 3.5.1). When set, every request except `/healthz` must carry the header `X-Govagent-Origin: <secret>`, otherwise it gets `403 Forbidden`. Add the header with your CDN or proxy (for example a Cloudflare *Modify Request Header* transform rule) so traffic that bypasses the proxy is refused. |
+| `GOVAGENT_SANDBOX_RATE_LIMIT` | `0` (off) | Requests allowed per client IP per window (new in 3.5.1). Over the limit returns `429` with `Retry-After`. The client IP comes from `CF-Connecting-IP` only after the origin lock accepted the request; otherwise the socket peer is used. |
+| `GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS` | `60` | Rate-limit window in seconds (new in 3.5.1). |
 
 ---
 
@@ -186,6 +196,14 @@ GovAgent utilizes a highly modular package structure to enforce a strict "Separa
 **govagent.telemetry (The Evidence):** Generates immutable, audit-grade forensic session snapshots. If primary multi-cloud security operations center (SOC) ingestion sinks (AWS CloudWatch or Azure Log Analytics) experience network interruptions, the layer automatically drops telemetry payloads into a localized, self-healing Dead-Letter Queue (DLQ) to ensure continuous regulatory traceability.
 
 **govagent.governance.meta (The Optimization):** Hosts the MetaGovernor engine, an automated self-healing policy loop. It continuously scrapes friction logs and repeated circuit-breaker events (such as successive budget rejections) to autonomously compile non-hallucinated, data-backed POLICY_AMENDMENT_PROPOSALS for review.
+
+**New in 3.5.1 (security patch):**
+
+- `CircuitBreaker` and `HITLManager` fail closed on malformed amounts (`NaN`, infinity, negative, non-numeric). The breaker raises `GovernanceViolation`; HITL prices them at the strictest approval tier. Helper: `govagent.guards.circuit_breaker.checked_amount`.
+- `SlackJudiciaryAdapter(allowed_approvers={slack_user_id: role})` restricts who can vote and caps each voter at their own role. Default `None` keeps the old open behaviour and logs a warning.
+- `HarborVerifier` refuses the offline `mock-token` stub when `GOVAGENT_ENVIRONMENT=production`.
+- `GovernedMCPGateway` redacts PII inside nested dict/list/tuple arguments and warns when the policy has no tool allow-list.
+- Sandbox API (repo only, not in the wheel): opt-in origin lock (`GOVAGENT_ORIGIN_SECRET` + `X-Govagent-Origin` header), opt-in per-IP rate limit (`GOVAGENT_SANDBOX_RATE_LIMIT`, `GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS`), failed-auth logging, policy profiles confined to `./policies`, explicit CORS origins, capped input size. See *Sandbox security settings* above.
 
 **New in 3.5.0:**
 
@@ -429,6 +447,6 @@ We enforce a strict branching strategy to keep `main` stable:
 
 ---
 ### Author Stamp
-*   **Framework:** GovAgent v3.5.0 
+*   **Framework:** GovAgent v3.5.1 
 *   **Compliance:** Designed for Article 9, 12, and 14 Accountability
 *   **Status:** Active / Open-Source Standard

@@ -5,6 +5,11 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 ---
 
 ## [Unreleased]
+
+## [3.5.1] - 2026-11-20
+
+Patch release: security hardening. No public API was removed; the new sandbox settings are opt-in and off by default.
+
 ### Security
 
 - `CircuitBreaker` and `HITLManager` now fail closed on a malformed monetary `amount`. `NaN`, infinities, negative numbers and non-numeric values used to compare below every ceiling (a `NaN` amount skipped the per-transaction cap and landed in the weakest approval tier); they now raise `GovernanceViolation` (breaker) or are priced at the strictest approval tier (HITL). New helper `govagent.guards.circuit_breaker.checked_amount`.
@@ -13,6 +18,11 @@ All notable changes to the **GovAgent** framework are documented in this file. T
 - `GovernedMCPGateway` redacts PII in nested dict, list and tuple arguments (previously only top-level strings) and warns when the policy has no tool allow-list.
 - Sandbox API (`api/server.py`, not part of the wheel): `policy_profile` is confined to `./policies/*.yaml`, bearer-token comparison is constant-time, CORS uses an explicit origin list (`GOVAGENT_CORS_ORIGINS`, no wildcard, no credentials), `task_input` is capped at 20,000 characters, the in-memory state map is bounded, and the dev image runs as a non-root user with ports bound to 127.0.0.1.
 - Sandbox API origin lock and rate limit are opt-in and off by default: set `GOVAGENT_ORIGIN_SECRET` (CDN/proxy adds `X-Govagent-Origin`) and/or `GOVAGENT_SANDBOX_RATE_LIMIT` (optional `GOVAGENT_SANDBOX_RATE_WINDOW_SECONDS`, default 60). The limiter keys on `CF-Connecting-IP` only after the origin lock accepts the request, and drops stale entries past 10,000 tracked addresses. Failed sandbox bearer-token checks are logged with peer address, path and user agent (never the token).
+
+### Dependencies
+
+- The optional `enterprise` extra now accepts `sentence-transformers >=5.6,<7.0` (was `^5.6.0`), so 6.x installs.
+- Dependabot updates grouped weekly; lock file refreshed (openai, langchain-core, boto3, slack-sdk, spacy, presidio-anonymizer, python-dotenv, fastapi and black for dev) and GitHub Actions bumped.
 
 ## [3.5.0] - 2026-11-14
 ### Added
